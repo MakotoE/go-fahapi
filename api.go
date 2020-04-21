@@ -60,7 +60,7 @@ func (a *API) Exec(command string) (string, error) {
 		return "", nil
 	}
 
-	a.sendChan <- command
+	a.sendChan <- command // TODO need mutex
 	msg := <-a.msgChan
 	return msg.msg, msg.err
 }
