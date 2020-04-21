@@ -228,24 +228,20 @@ func readMessage(r telnet.Reader) (string, error) {
 	}
 }
 
-var unmarshalPyONReplacements = []struct {
-	from string
-	to   string
-}{
-	{"None", `""`},
-	{"False", "false"},
-	{"True", "true"},
-}
+var unmarshalPyONReplacer = strings.NewReplacer(
+	"None", `""`,
+	"False", "false",
+	"True", "true",
+)
 
 func unmarshalPyON(s string, dst interface{}) error {
 	if !strings.HasPrefix(s, "PyON") || !strings.HasSuffix(s, "\n---") {
 		return errors.Errorf("invalid PyON format: %s", s)
 	}
 
-	for _, replacement := range unmarshalPyONReplacements {
-		s = strings.Replace(s, replacement.from, replacement.to, -1)
-	}
-
 	trimmed := s[strings.IndexByte(s, '\n')+1 : len(s)-len("\n---")]
-	return errors.WithStack(json.Unmarshal([]byte(trimmed), dst))
+
+	replaced := unmarshalPyONReplacer.Replace(trimmed)
+
+	return errors.WithStack(json.Unmarshal([]byte(replaced), dst))
 }
