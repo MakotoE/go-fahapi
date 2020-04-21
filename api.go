@@ -1,4 +1,4 @@
-package go_fahapi
+package fahapi
 
 import (
 	"bytes"
@@ -53,14 +53,14 @@ func (a *API) Close() error {
 
 // TODO implement all commands
 
-// Exec executes s on the FAH client.
-func (a *API) Exec(s string) (string, error) {
-	if s == "" {
+// Exec executes command on the FAH client.
+func (a *API) Exec(command string) (string, error) {
+	if command == "" {
 		// FAH doesn't respond to an empty command
 		return "", nil
 	}
 
-	a.sendChan <- s
+	a.sendChan <- command
 	msg := <-a.msgChan
 	return msg.msg, msg.err
 }
