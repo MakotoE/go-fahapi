@@ -9,12 +9,14 @@ import (
 	"io"
 	"log"
 	"strings"
+	"sync"
 )
 
 type API struct {
-	conn     *telnet.Conn
-	sendChan chan<- string
-	msgChan  <-chan message
+	conn         *telnet.Conn
+	messageMutex sync.Mutex
+	sendChan     chan<- string
+	msgChan      <-chan message
 }
 
 type message struct {
@@ -60,7 +62,10 @@ func (a *API) Exec(command string) (string, error) {
 		return "", nil
 	}
 
-	a.sendChan <- command // TODO need mutex
+	a.messageMutex.Lock()
+	defer a.messageMutex.Unlock()
+
+	a.sendChan <- command
 	msg := <-a.msgChan
 	return msg.msg, msg.err
 }
