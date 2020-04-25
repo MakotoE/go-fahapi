@@ -134,18 +134,18 @@ func (o *Options) fromMap(m map[string]string) error {
 	var err error
 	o.Allow = m["allow"]
 	o.CaptureDirectory = m["capture-directory"]
-	o.CaptureOnError = IsTrue(m["capture-on-error"])
-	o.CapturePackets = IsTrue(m["capture-packets"])
-	o.CaptureRequests = IsTrue(m["capture-requests"])
-	o.CaptureResponses = IsTrue(m["capture-responses"])
-	o.CaptureSockets = IsTrue(m["capture-sockets"])
+	o.CaptureOnError = isTrue(m["capture-on-error"])
+	o.CapturePackets = isTrue(m["capture-packets"])
+	o.CaptureRequests = isTrue(m["capture-requests"])
+	o.CaptureResponses = isTrue(m["capture-responses"])
+	o.CaptureSockets = isTrue(m["capture-sockets"])
 	o.Cause = m["cause"]
 	o.CertificateFile = m["certificate-file"]
 	o.Checkpoint, err = strconv.Atoi(m["checkpoint"])
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.Child = IsTrue(m["child"])
+	o.Child = isTrue(m["child"])
 	o.ClientSubtype = m["client-subtype"]
 	o.ClientThreads, err = strconv.Atoi(m["client-threads"])
 	if err != nil {
@@ -156,12 +156,12 @@ func (o *Options) fromMap(m map[string]string) error {
 	o.CommandAllowNoPass = m["command-allow-no-pass"]
 	o.Deny = m["deny"]
 	o.CommandDenyNoPass = m["command-deny-no-pass"]
-	o.CommandEnable = IsTrue(m["command-enable"])
+	o.CommandEnable = isTrue(m["command-enable"])
 	o.CommandPort, err = strconv.Atoi(m["command-port"])
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.ConfigRotate = IsTrue(m["config-rotate"])
+	o.ConfigRotate = isTrue(m["config-rotate"])
 	o.ConfigRotateDir = m["config-rotate-dir"]
 	o.ConfigRotateMax, err = strconv.Atoi(m["config-rotate-max"])
 	if err != nil {
@@ -192,52 +192,52 @@ func (o *Options) fromMap(m map[string]string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.Daemon = IsTrue(m["daemon"])
-	o.DebugSockets = IsTrue(m["debug-sockets"])
-	o.DisableSleepWhenActive = IsTrue(m["disable-sleep-when-active"])
-	o.DisableViz = IsTrue(m["disable-viz"])
-	o.DumpAfterDeadline = IsTrue(m["dump-after-deadline"])
-	o.ExceptionLocations = IsTrue(m["exception-locations"])
-	o.ExitWhenDone = IsTrue(m["exit-when-done"])
+	o.Daemon = isTrue(m["daemon"])
+	o.DebugSockets = isTrue(m["debug-sockets"])
+	o.DisableSleepWhenActive = isTrue(m["disable-sleep-when-active"])
+	o.DisableViz = isTrue(m["disable-viz"])
+	o.DumpAfterDeadline = isTrue(m["dump-after-deadline"])
+	o.ExceptionLocations = isTrue(m["exception-locations"])
+	o.ExitWhenDone = isTrue(m["exit-when-done"])
 	o.ExtraCoreArgs = m["extra-core-args"]
-	o.FoldAnon = IsTrue(m["fold-anon"])
-	o.Gpu = IsTrue(m["gpu"])
+	o.FoldAnon = isTrue(m["fold-anon"])
+	o.Gpu = isTrue(m["gpu"])
 	o.GpuIndex = m["gpu-index"]
 	o.GpuUsage, err = strconv.Atoi(m["gpu-usage"])
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.GuiEnabled = IsTrue(m["gui-enabled"])
+	o.GuiEnabled = isTrue(m["gui-enabled"])
 	o.HttpAddresses = m["http-addresses"]
 	o.HttpsAddresses = m["https-addresses"]
-	o.Idle = IsTrue(m["idle"])
+	o.Idle = isTrue(m["idle"])
 	o.Log = m["log"]
-	o.LogColor = IsTrue(m["log-color"])
-	o.LogCrlf = IsTrue(m["log-crlf"])
-	o.LogDate = IsTrue(m["log-date"])
+	o.LogColor = isTrue(m["log-color"])
+	o.LogCrlf = isTrue(m["log-crlf"])
+	o.LogDate = isTrue(m["log-date"])
 	o.LogDatePeriodically, err = strconv.Atoi(m["log-date-periodically"])
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.LogDomain = IsTrue(m["log-domain"])
+	o.LogDomain = isTrue(m["log-domain"])
 	o.LogDomainLevels = m["log-domain-levels"]
-	o.LogHeader = IsTrue(m["log-header"])
-	o.LogLevel = IsTrue(m["log-level"])
-	o.LogNoInfoHeader = IsTrue(m["log-no-info-header"])
-	o.LogRedirect = IsTrue(m["log-redirect"])
-	o.LogRotate = IsTrue(m["log-rotate"])
+	o.LogHeader = isTrue(m["log-header"])
+	o.LogLevel = isTrue(m["log-level"])
+	o.LogNoInfoHeader = isTrue(m["log-no-info-header"])
+	o.LogRedirect = isTrue(m["log-redirect"])
+	o.LogRotate = isTrue(m["log-rotate"])
 	o.LogRotateDir = m["log-rotate-dir"]
 	o.LogRotateMax, err = strconv.Atoi(m["log-rotate-max"])
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.LogShortLevel = IsTrue(m["log-short-level"])
-	o.LogSimpleDomains = IsTrue(m["log-simple-domains"])
-	o.LogThreadId = IsTrue(m["log-thread-id"])
-	o.LogThreadPrefix = IsTrue(m["log-thread-prefix"])
-	o.LogTime = IsTrue(m["log-time"])
-	o.LogToScreen = IsTrue(m["log-to-screen"])
-	o.LogTruncate = IsTrue(m["log-truncate"])
+	o.LogShortLevel = isTrue(m["log-short-level"])
+	o.LogSimpleDomains = isTrue(m["log-simple-domains"])
+	o.LogThreadId = isTrue(m["log-thread-id"])
+	o.LogThreadPrefix = isTrue(m["log-thread-prefix"])
+	o.LogTime = isTrue(m["log-time"])
+	o.LogToScreen = isTrue(m["log-to-screen"])
+	o.LogTruncate = isTrue(m["log-truncate"])
 	o.MachineId, err = strconv.Atoi(m["machine-id"])
 	if err != nil {
 		return errors.WithStack(err)
@@ -285,18 +285,18 @@ func (o *Options) fromMap(m map[string]string) error {
 		return errors.WithStack(err)
 	}
 	o.Priority = m["priority"]
-	o.NoAssembly = IsTrue(m["no-assembly"])
-	o.OpenWebControl = IsTrue(m["open-web-control"])
+	o.NoAssembly = isTrue(m["no-assembly"])
+	o.OpenWebControl = isTrue(m["open-web-control"])
 	o.OpenclIndex = m["opencl-index"]
 	o.OsSpecies = m["os-species"]
 	o.OsType = m["os-type"]
 	o.Passkey = m["passkey"]
 	o.Password = m["password"]
-	o.PauseOnBattery = IsTrue(m["pause-on-battery"])
-	o.PauseOnStart = IsTrue(m["pause-on-start"])
-	o.Paused = IsTrue(m["paused"])
-	o.Pid = IsTrue(m["pid"])
-	o.PidFile = IsTrue(m["pid-file"])
+	o.PauseOnBattery = isTrue(m["pause-on-battery"])
+	o.PauseOnStart = isTrue(m["pause-on-start"])
+	o.Paused = isTrue(m["paused"])
+	o.Pid = isTrue(m["pid"])
+	o.PidFile = isTrue(m["pid-file"])
 	o.Power, err = NewPower(m["power"])
 	if err != nil {
 		return errors.WithStack(err)
@@ -307,13 +307,13 @@ func (o *Options) fromMap(m map[string]string) error {
 		return errors.WithStack(err)
 	}
 	o.Proxy = m["proxy"]
-	o.ProxyEnable = IsTrue(m["proxy-enable"])
+	o.ProxyEnable = isTrue(m["proxy-enable"])
 	o.ProxyPass = m["proxy-pass"]
 	o.ProxyUser = m["proxy-user"]
-	o.Respawn = IsTrue(m["respawn"])
-	o.Service = IsTrue(m["service"])
+	o.Respawn = isTrue(m["respawn"])
+	o.Service = isTrue(m["service"])
 	o.ServiceDescription = m["service-description"]
-	o.ServiceRestart = IsTrue(m["service-restart"])
+	o.ServiceRestart = isTrue(m["service-restart"])
 	o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"])
 	if err != nil {
 		return errors.WithStack(err)
@@ -327,9 +327,9 @@ func (o *Options) fromMap(m map[string]string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	o.Smp = IsTrue(m["smp"])
-	o.StackTraces = IsTrue(m["stack-traces"])
-	o.StallDetectionEnabled = IsTrue(m["stall-detection-enabled"])
+	o.Smp = isTrue(m["smp"])
+	o.StackTraces = isTrue(m["stack-traces"])
+	o.StallDetectionEnabled = isTrue(m["stall-detection-enabled"])
 	o.StallPercent, err = strconv.Atoi(m["stall-percent"])
 	if err != nil {
 		return errors.WithStack(err)
@@ -349,7 +349,7 @@ func (o *Options) fromMap(m map[string]string) error {
 	}
 	o.WebAllow = m["web-allow"]
 	o.WebDeny = m["web-deny"]
-	o.WebEnable = IsTrue(m["web-enable"])
+	o.WebEnable = isTrue(m["web-enable"])
 	return nil
 }
 
@@ -369,6 +369,6 @@ func NewPower(s string) (Power, error) {
 	return "", errors.Errorf("s is invalid: %s", s)
 }
 
-func IsTrue(s string) bool {
+func isTrue(s string) bool {
 	return s == "true"
 }
