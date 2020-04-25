@@ -1,3 +1,4 @@
+// Folding@home client API wrapper for Go
 package fahapi
 
 import (
@@ -12,6 +13,8 @@ import (
 	"sync"
 )
 
+// API contains the client connection. Use NewAPI() to get a new instance, and use API.Close() to
+// release resources.
 type API struct {
 	conn         *telnet.Conn
 	messageMutex sync.Mutex
