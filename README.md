@@ -2,8 +2,6 @@
 
 # Folding@home client API wrapper for Go
 
-This is a work in progress!
-
 ```
 func ExampleAPI_PauseAll() {
 	api, err := NewAPI()
