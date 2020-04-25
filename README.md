@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/MakotoE/go-fahapi?status.svg)](https://godoc.org/github.com/MakotoE/go-fahapi)
+[![GoDoc](https://godoc.org/github.com/MakotoE/go-fahapi?status.svg)](https://pkg.go.dev/github.com/MakotoE/go-fahapi)
 
 # Folding@home client API wrapper for Go
 
