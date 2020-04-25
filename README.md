@@ -4,4 +4,21 @@
 
 This is a work in progress!
 
-Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
+```
+func ExampleAPI_PauseAll() {
+	api, err := NewAPI()
+	if err != nil {
+		panic(err)
+	}
+
+	defer api.Close()
+
+	if err := api.PauseAll(); err != nil {
+		panic(err)
+	}
+
+	if err := api.UnpauseAll(); err != nil {
+		panic(err)
+	}
+}
+```
