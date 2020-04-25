@@ -3,6 +3,8 @@ package fahapi
 import (
 	"github.com/pkg/errors"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type Options struct {
@@ -371,4 +373,115 @@ func NewPower(s string) (Power, error) {
 
 func isTrue(s string) bool {
 	return s == "true"
+}
+
+type slotQueueInfoRaw struct {
+	ID             string `json:"id"`
+	State          string `json:"state"`
+	Error          string `json:"error"`
+	Project        int    `json:"project"`
+	Run            int    `json:"run"`
+	Clone          int    `json:"clone"`
+	Gen            int    `json:"gen"`
+	Core           string `json:"core"`
+	Unit           string `json:"unit"`
+	PercentDone    string `json:"percentdone"`
+	ETA            string `json:"eta"`
+	PPD            string `json:"ppd"`
+	CreditEstimate string `json:"creditestimate"`
+	WaitingOn      string `json:"waitingon"`
+	NextAttempt    string `json:"nextattempt"`
+	TimeRemaining  string `json:"timeremaining"`
+	TotalFrames    int    `json:"totalframes"`
+	FramesDone     int    `json:"framesdone"`
+	Assigned       string `json:"assigned"`
+	Timeout        string `json:"timeout"`
+	Deadline       string `json:"deadline"`
+	WS             string `json:"ws"`
+	CS             string `json:"cs"`
+	Attempts       int    `json:"attempts"`
+	Slot           string `json:"slot"`
+	TPF            string `json:"tpf"`
+	BaseCredit     string `json:"basecredit"`
+}
+
+type SlotQueueInfo struct {
+	ID             string
+	State          string // TODO create enum type (need official documentation to know every possible value)
+	Error          string // This should also be enum
+	Project        int
+	Run            int
+	Clone          int
+	Gen            int
+	Core           string
+	Unit           string
+	PercentDone    string
+	ETA            time.Duration
+	PPD            int
+	CreditEstimate int
+	WaitingOn      string
+	NextAttempt    time.Duration
+	TimeRemaining  time.Duration
+	TotalFrames    int
+	FramesDone     int
+	Assigned       time.Time
+	Timeout        time.Time
+	Deadline       time.Time
+	WS             string // This could be an IP address but don't know for sure
+	CS             string
+	Attempts       int
+	Slot           string
+	TPF            time.Duration
+	BaseCredit     int
+}
+
+func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) {
+	s.ID = r.ID
+	s.State = r.State
+	s.Error = r.Error
+	s.Project = r.Project
+	s.Run = r.Run
+	s.Clone = r.Clone
+	s.Gen = r.Gen
+	s.Core = r.Core
+	s.Unit = r.Unit
+	s.PercentDone = r.PercentDone
+	//s.ETA
+}
+
+var parseFAHDurationReplacer = strings.NewReplacer(
+	" ", "",
+	"days", "d",
+	"day", "d",
+	"hours", "h",
+	"hour", "h",
+	"mins", "m",
+	"min", "m",
+	"secs", "s",
+	"sec", "s",
+)
+
+func parseFAHDuration(s string) (time.Duration, error) {
+	shortened := parseFAHDurationReplacer.Replace(s)
+	dIndex := strings.IndexByte(shortened, 'd')
+	days := 0.0
+	if dIndex > -1 {
+		daysTmp, err := strconv.ParseFloat(shortened[:dIndex], 64)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		days = daysTmp
+	}
+
+	durationString := shortened[dIndex+1:]
+	if durationString == "" && shortened != "" { // s only contains days
+		return time.Hour * 24 * time.Duration(days), nil
+	}
+
+	duration, err := time.ParseDuration(durationString)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+
+	return duration + time.Hour*24*time.Duration(days), nil
 }
