@@ -81,8 +81,14 @@ func (a *API) Help() (string, error) {
 }
 
 // Info returns FAH build and machine info.
-func (a *API) Info() (string, error) {
-	return a.Exec("info") // TODO unmarshal
+func (a *API) Info() ([][]interface{}, error) {
+	s, err := a.Exec("info")
+	if err != nil {
+		return nil, err
+	}
+
+	var result [][]interface{}
+	return result, unmarshalPyON(s, &result)
 }
 
 // NumSlots returns the number of slots.
