@@ -144,7 +144,6 @@ func ExampleAPI_PauseAll() {
 	if err != nil {
 		panic(err)
 	}
-
 	defer api.Close()
 
 	if err := api.PauseAll(); err != nil {
