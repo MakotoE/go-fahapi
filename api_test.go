@@ -139,7 +139,7 @@ func TestUnmarshalPyON(t *testing.T) {
 	}
 }
 
-func ExampleAPI_PauseAll() {
+func Example() {
 	api, err := NewAPI()
 	if err != nil {
 		panic(err)
