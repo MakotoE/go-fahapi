@@ -15,7 +15,7 @@ import (
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
 
-// API contains the client connection. Use NewAPI() to get a new instance, and use API.Close() to
+// API contains the client connection. Use NewAPI() to get a new instance, and API.Close() to
 // release resources.
 type API struct {
 	conn         *telnet.Conn
