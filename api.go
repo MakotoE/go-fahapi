@@ -137,7 +137,7 @@ func (a *API) PauseAll() error {
 
 // PauseSlot pauses a slot.
 func (a *API) PauseSlot(slot int) error {
-	// Unfortunately the command doesn't tell you if it succeeded
+	// Unfortunately the command doesn't tell you if it succeeded or not
 	_, err := a.Exec(fmt.Sprintf("pause %d", slot))
 	return err
 }
@@ -153,8 +153,24 @@ func (a *API) PPD() (float64, error) {
 }
 
 // QueueInfo returns info about the current work unit.
-func (a *API) QueueInfo() (string, error) {
-	return a.Exec("queue-info") // TODO unmarshal this
+func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
+	s, err := a.Exec("queue-info")
+	if err != nil {
+		return nil, err
+	}
+
+	var raw []slotQueueInfoRaw
+	if err := unmarshalPyON(s, &raw); err != nil {
+		return nil, err
+	}
+
+	result := make([]SlotQueueInfo, len(raw))
+	for i, row := range raw {
+		if err := result[i].fromRaw(&row); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 // Shutdown ends all FAH processes.
