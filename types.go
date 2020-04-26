@@ -466,19 +466,18 @@ func parseFAHDuration(s string) (time.Duration, error) {
 	dIndex := strings.IndexByte(shortened, 'd')
 	days := 0.0
 	if dIndex > -1 {
-		daysTmp, err := strconv.ParseFloat(shortened[:dIndex], 64)
+		daysTemp, err := strconv.ParseFloat(shortened[:dIndex], 64)
 		if err != nil {
 			return 0, errors.WithStack(err)
 		}
-		days = daysTmp
+		days = daysTemp
+
+		if dIndex >= len(shortened)-1 { // s only contains days
+			return time.Hour * 24 * time.Duration(days), nil
+		}
 	}
 
-	durationString := shortened[dIndex+1:]
-	if durationString == "" && shortened != "" { // s only contains days
-		return time.Hour * 24 * time.Duration(days), nil
-	}
-
-	duration, err := time.ParseDuration(durationString)
+	duration, err := time.ParseDuration(shortened[dIndex+1:])
 	if err != nil {
 		return 0, errors.WithStack(err)
 	}
