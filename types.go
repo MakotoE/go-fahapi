@@ -427,7 +427,7 @@ type SlotQueueInfo struct {
 	Assigned       time.Time
 	Timeout        time.Time
 	Deadline       time.Time
-	WS             string // This could be an IP address but don't know for sure
+	WS             string // This could be an IP address but I don't know for sure
 	CS             string
 	Attempts       int
 	Slot           string
@@ -435,7 +435,8 @@ type SlotQueueInfo struct {
 	BaseCredit     int
 }
 
-func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) {
+func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
+	var err error
 	s.ID = r.ID
 	s.State = r.State
 	s.Error = r.Error
@@ -446,7 +447,50 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) {
 	s.Core = r.Core
 	s.Unit = r.Unit
 	s.PercentDone = r.PercentDone
-	//s.ETA
+	s.ETA, err = parseFAHDuration(r.ETA)
+	if err != nil {
+		return err
+	}
+	s.PPD, err = strconv.Atoi(r.PPD)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	s.CreditEstimate, err = strconv.Atoi(r.CreditEstimate)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	s.WaitingOn = r.WaitingOn
+	s.NextAttempt, err = parseFAHDuration(r.NextAttempt)
+	if err != nil {
+		return err
+	}
+	s.TotalFrames = r.TotalFrames
+	s.FramesDone = r.FramesDone
+	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	s.Timeout, err = time.Parse(time.RFC3339, r.Timeout)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	s.Deadline, err = time.Parse(time.RFC3339, r.Deadline)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	s.WS = r.WS
+	s.CS = r.CS
+	s.Attempts = r.Attempts
+	s.Slot = r.Slot
+	s.TPF, err = parseFAHDuration(r.TPF)
+	if err != nil {
+		return err
+	}
+	s.BaseCredit, err = strconv.Atoi(r.BaseCredit)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 var parseFAHDurationReplacer = strings.NewReplacer(
