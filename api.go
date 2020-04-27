@@ -60,7 +60,7 @@ func (a *API) Close() error {
 
 // TODO implement all commands
 
-// Exec executes command on the FAH client.
+// Exec executes a command on the FAH client.
 func (a *API) Exec(command string) (string, error) {
 	if command == "" {
 		// FAH doesn't respond to an empty command
