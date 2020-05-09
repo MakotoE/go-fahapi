@@ -356,6 +356,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	s.CreditEstimate, err = strconv.Atoi(r.CreditEstimate)
 	s.WaitingOn = r.WaitingOn
 	s.NextAttempt, err = parseFAHDuration(r.NextAttempt)
+	s.TimeRemaining, err = parseFAHDuration(r.TimeRemaining)
 	s.TotalFrames = r.TotalFrames
 	s.FramesDone = r.FramesDone
 	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned)
