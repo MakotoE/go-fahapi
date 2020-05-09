@@ -75,6 +75,11 @@ func (a *APITestSuite) TestNumSlots() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestUptime() {
+	_, err := a.api.Uptime()
+	assert.Nil(a.T(), err)
+}
+
 func (a *APITestSuite) TestOptionsSetGet() {
 	if !doAllTests {
 		return

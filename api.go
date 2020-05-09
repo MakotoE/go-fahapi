@@ -11,6 +11,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
@@ -104,6 +105,23 @@ func (a *API) NumSlots() (int, error) {
 
 	n := 0
 	return n, unmarshalPyON(s, &n)
+}
+
+// Uptime returns FAH uptime.
+func (a *API) Uptime() (time.Duration, error) {
+	// work around for response to uptime command not including a trailing newline
+	s, err := a.Exec("eval \"$(uptime)\\n\"")
+	if err != nil {
+		return 0, err
+	}
+
+	// when formatting with a newline, the response contains an extra trailing backslash
+	u, err := parseFAHDuration(strings.TrimSuffix(s, "\\"))
+	if err != nil {
+		return 0, err
+	}
+
+	return u, nil
 }
 
 // OptionsGet gets the FAH client options.
