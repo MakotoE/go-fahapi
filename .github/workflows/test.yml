@@ -1,0 +1,19 @@
+name: Test
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.13'
+      - uses: actions/checkout@v2
+      - run: docker run --rm -it -p36330:36330 johnktims/folding-at-home:latest --user=Anonymous --team=0 --paused
+      - run: go test -i -v
