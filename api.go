@@ -11,6 +11,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
@@ -79,6 +80,17 @@ func (a *API) Exec(command string) (string, error) {
 	return msg.msg, msg.err
 }
 
+// ExecEval executes commands which do not return a trailing newline.
+func (a *API) ExecEval(command string) (string, error) {
+	s, err := a.Exec(fmt.Sprintf(`eval "$(%s)\n"`, command))
+	if err != nil {
+		return "", err
+	}
+
+	// When using eval with a newline, the response contains an extra trailing backslash.
+	return strings.TrimSuffix(s, "\\"), nil
+}
+
 // Help returns the FAH telnet API commands.
 func (a *API) Help() (string, error) {
 	return a.Exec("help")
@@ -104,6 +116,21 @@ func (a *API) NumSlots() (int, error) {
 
 	n := 0
 	return n, unmarshalPyON(s, &n)
+}
+
+// Uptime returns FAH uptime.
+func (a *API) Uptime() (time.Duration, error) {
+	s, err := a.ExecEval("uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	u, err := parseFAHDuration(s)
+	if err != nil {
+		return 0, err
+	}
+
+	return u, nil
 }
 
 // OptionsGet gets the FAH client options.
