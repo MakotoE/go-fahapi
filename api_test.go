@@ -59,6 +59,11 @@ func (a *APITestSuite) TestExec() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestExecEval() {
+	_, err := a.api.ExecEval("date")
+	assert.Nil(a.T(), err)
+}
+
 func (a *APITestSuite) TestHelp() {
 	result, err := a.api.Help()
 	assert.NotEqual(a.T(), "", result)

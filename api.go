@@ -80,6 +80,17 @@ func (a *API) Exec(command string) (string, error) {
 	return msg.msg, msg.err
 }
 
+// ExecEval executes commands which do not return a trailing newline.
+func (a *API) ExecEval(command string) (string, error) {
+	s, err := a.Exec(fmt.Sprintf(`eval "$(%s)\n"`, command))
+	if err != nil {
+		return "", err
+	}
+
+	// When using eval with a newline, the response contains an extra trailing backslash.
+	return strings.TrimSuffix(s, "\\"), nil
+}
+
 // Help returns the FAH telnet API commands.
 func (a *API) Help() (string, error) {
 	return a.Exec("help")
@@ -109,14 +120,12 @@ func (a *API) NumSlots() (int, error) {
 
 // Uptime returns FAH uptime.
 func (a *API) Uptime() (time.Duration, error) {
-	// work around for response to uptime command not including a trailing newline
-	s, err := a.Exec("eval \"$(uptime)\\n\"")
+	s, err := a.ExecEval("uptime")
 	if err != nil {
 		return 0, err
 	}
 
-	// when formatting with a newline, the response contains an extra trailing backslash
-	u, err := parseFAHDuration(strings.TrimSuffix(s, "\\"))
+	u, err := parseFAHDuration(s)
 	if err != nil {
 		return 0, err
 	}
