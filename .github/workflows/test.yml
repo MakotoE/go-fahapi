@@ -15,5 +15,5 @@ jobs:
         with:
           go-version: '1.13'
       - uses: actions/checkout@v2
-      - run: docker run -d -p36330:36330 johnktims/folding-at-home:latest --user=Anonymous --team=0 --paused
+      - run: docker run -d -p36330:36330 johnktims/folding-at-home:7.6.9 --user=Anonymous --team=0 --paused
       - run: go test -v
