@@ -30,7 +30,11 @@ type message struct {
 }
 
 func NewAPI() (*API, error) {
-	conn, err := telnet.DialTo("localhost:36330")
+	return NewAPIWithAddress("localhost:36330")
+}
+
+func NewAPIWithAddress(addr string) (*API, error) {
+	conn, err := telnet.DialTo(addr)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -46,6 +46,12 @@ func (a *APITestSuite) SetupTest() {
 	a.api = api
 }
 
+func (a *APITestSuite) SetupWithAddressTest() {
+	api, err := NewAPIWithAddress("localhost:36330")
+	require.Nil(a.T(), err)
+	a.api = api
+}
+
 func (a *APITestSuite) TestAPI() {
 	// For trying new commands
 	s, err := a.api.Exec("")
