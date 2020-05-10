@@ -15,5 +15,6 @@ jobs:
         with:
           go-version: '1.13'
       - uses: actions/checkout@v2
-      - run: docker run -d -p36330:36330 johnktims/folding-at-home:7.6.9 --user=Anonymous --team=0 --paused
+      - run: wget https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v7.6/fahclient_7.6.13_amd64.deb
+      - run: dpkg -i fahclient_7.6.13_amd64.deb
       - run: go test -v
