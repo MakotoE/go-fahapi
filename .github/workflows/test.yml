@@ -1,0 +1,21 @@
+name: Test
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.13'
+      - uses: actions/checkout@v2
+      - run: wget https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v7.6/fahclient_7.6.13_amd64.deb
+      - run: sudo dpkg -i fahclient_7.6.13_amd64.deb
+      - run: FAHClient --send-command pause
+      - run: go test -v
