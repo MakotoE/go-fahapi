@@ -120,10 +120,8 @@ func (a *API) OptionsGet(dst *Options) error {
 // OptionsSet sets an option.
 func (a *API) OptionsSet(key string, value interface{}) error {
 	// Prevent injection attacks
-	const badChars = "= "
 	valueString, valueIsString := value.(string)
-	if strings.ContainsAny(key, badChars+"!") ||
-		valueIsString && strings.ContainsAny(valueString, badChars) {
+	if strings.ContainsAny(key, "= !") || valueIsString && strings.ContainsRune(valueString, ' ') {
 		return errors.New("key or value contains bad char")
 	}
 
