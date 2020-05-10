@@ -29,8 +29,12 @@ type message struct {
 	err error
 }
 
-func NewAPI() (*API, error) {
-	conn, err := telnet.DialTo("localhost:36330")
+// DefaultAddr is the default FAH telnet address.
+const DefaultAddr = ":36330"
+
+// NewAPI connects to your FAH client. DefaultAddr is the default client address.
+func NewAPI(addr string) (*API, error) {
+	conn, err := telnet.DialTo(addr)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

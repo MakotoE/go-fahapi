@@ -41,7 +41,7 @@ func TestAPITestSuite(t *testing.T) {
 }
 
 func (a *APITestSuite) SetupTest() {
-	api, err := NewAPI()
+	api, err := NewAPI(DefaultAddr)
 	require.Nil(a.T(), err)
 	a.api = api
 }

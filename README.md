@@ -4,7 +4,7 @@
 
 ```
 func Example() {
-	api, err := NewAPI()
+	api, err := NewAPI(DefaultAddr)
 	if err != nil {
 		panic(err)
 	}
