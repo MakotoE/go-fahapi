@@ -394,7 +394,7 @@ func parseFAHDuration(s string) (time.Duration, error) {
 		days = daysTemp
 
 		if dIndex >= len(shortened)-1 { // s only contains days
-			return time.Duration(float64(time.Hour) * 24 * days).Truncate(time.Second), nil
+			return time.Duration(float64(time.Hour) * 24 * days), nil
 		}
 	}
 
@@ -403,5 +403,5 @@ func parseFAHDuration(s string) (time.Duration, error) {
 		return 0, errors.WithStack(err)
 	}
 
-	return duration + time.Duration(float64(time.Hour) * 24 * days).Truncate(time.Second), nil
+	return duration + time.Duration(float64(time.Hour) * 24 * days), nil
 }
