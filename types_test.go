@@ -58,6 +58,11 @@ func TestParseFAHDuration(t *testing.T) {
 			time.Hour*24 + time.Second,
 			false,
 		},
+		{
+			"1.5 days",
+			time.Hour*36,
+			false,
+		},
 	}
 
 	for i, test := range tests {
