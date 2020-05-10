@@ -3,7 +3,7 @@
 # Folding@home client API wrapper for Go
 
 ```
-func ExampleAPI_PauseAll() {
+func Example() {
 	api, err := NewAPI()
 	if err != nil {
 		panic(err)
