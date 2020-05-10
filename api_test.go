@@ -91,7 +91,7 @@ func (a *APITestSuite) TestOptionsSetGet() {
 	assert.Nil(a.T(), a.api.OptionsGet(newOptions))
 	assert.Equal(a.T(), PowerLight, newOptions.Power)
 
-	assert.Nil(a.T(), a.api.OptionsSet("power", string(oldOptions.Power)))
+	assert.Nil(a.T(), a.api.OptionsSet("power", oldOptions.Power))
 }
 
 func (a *APITestSuite) TestPPD() {

@@ -118,15 +118,14 @@ func (a *API) OptionsGet(dst *Options) error {
 }
 
 // OptionsSet sets an option.
-func (a *API) OptionsSet(key string, value string) error { // TODO value should be interface{}
+func (a *API) OptionsSet(key string, value interface{}) error {
 	// Prevent injection attacks
-	const badChars = "= "
-	if strings.ContainsAny(key, badChars+"!") || strings.ContainsAny(value, badChars) {
+	valueString, valueIsString := value.(string)
+	if strings.ContainsAny(key, "= !") || valueIsString && strings.ContainsRune(valueString, ' ') {
 		return errors.New("key or value contains bad char")
 	}
 
-	s, err := a.Exec(fmt.Sprintf("options %s=%s", key, value))
-	_ = s
+	_, err := a.Exec(fmt.Sprintf("options %s=%s", key, value))
 	return err
 }
 
