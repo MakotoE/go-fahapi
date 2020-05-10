@@ -13,12 +13,12 @@ import (
 	"testing"
 )
 
-var iDontCareDoAllTheTests bool
+var doAllTests bool
 
 func TestMain(m *testing.M) {
 	flag.BoolVar(
-		&iDontCareDoAllTheTests,
-		"i-dont-care-do-all-the-tests",
+		&doAllTests,
+		"do-all-tests",
 		false,
 		"Do tests that will modify your FAH settings.",
 	)
@@ -76,7 +76,7 @@ func (a *APITestSuite) TestNumSlots() {
 }
 
 func (a *APITestSuite) TestOptionsSetGet() {
-	if !iDontCareDoAllTheTests {
+	if !doAllTests {
 		return
 	}
 
@@ -110,7 +110,7 @@ func (a *APITestSuite) TestSlotInfo() {
 }
 
 func (a *APITestSuite) TestPauseUnpause() {
-	if !iDontCareDoAllTheTests {
+	if !doAllTests {
 		return
 	}
 
