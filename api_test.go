@@ -1,15 +1,31 @@
 package fahapi
 
 import (
+	"flag"
 	"fmt"
 	"github.com/MakotoE/checkerror"
 	"github.com/reiver/go-telnet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"os"
 	"strings"
 	"testing"
 )
+
+var iDontCareDoAllTheTests bool
+
+func TestMain(m *testing.M) {
+	flag.BoolVar(
+		&iDontCareDoAllTheTests,
+		"i-dont-care-do-all-the-tests",
+		false,
+		"Do tests that will modify your FAH settings.",
+	)
+	// I couldn't use Docker for testing. https://github.com/MakotoE/go-fahapi/issues/19
+	flag.Parse()
+	os.Exit(m.Run())
+}
 
 type APITestSuite struct {
 	suite.Suite
@@ -59,8 +75,21 @@ func (a *APITestSuite) TestNumSlots() {
 	assert.Nil(a.T(), err)
 }
 
-func (a *APITestSuite) TestOptionsGet() {
-	assert.Nil(a.T(), a.api.OptionsGet(&Options{}))
+func (a *APITestSuite) TestOptionsSetGet() {
+	if !iDontCareDoAllTheTests {
+		return
+	}
+
+	oldOptions := &Options{}
+	assert.Nil(a.T(), a.api.OptionsGet(oldOptions))
+
+	assert.Nil(a.T(), a.api.OptionsSet("power", "LIGHT"))
+
+	newOptions := &Options{}
+	assert.Nil(a.T(), a.api.OptionsGet(newOptions))
+	assert.Equal(a.T(), PowerLight, newOptions.Power)
+
+	assert.Nil(a.T(), a.api.OptionsSet("power", string(oldOptions.Power)))
 }
 
 func (a *APITestSuite) TestPPD() {
@@ -76,6 +105,15 @@ func (a *APITestSuite) TestQueueInfo() {
 func (a *APITestSuite) TestSlotInfo() {
 	_, err := a.api.SlotInfo()
 	assert.Nil(a.T(), err)
+}
+
+func (a *APITestSuite) TestPauseUnpause() {
+	if !iDontCareDoAllTheTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.PauseAll())
+	assert.Nil(a.T(), a.api.UnpauseAll())
 }
 
 func TestReadMessage(t *testing.T) {
