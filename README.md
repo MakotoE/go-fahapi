@@ -3,8 +3,12 @@
 # Folding@home client API wrapper for Go
 
 ```
-func Example() {
-	api, err := NewAPI(DefaultAddr)
+package main
+
+import "github.com/MakotoE/go-fahapi"
+
+func main() {
+	api, err := fahapi.NewAPI(fahapi.DefaultAddr)
 	if err != nil {
 		panic(err)
 	}
