@@ -17,4 +17,5 @@ jobs:
       - uses: actions/checkout@v2
       - run: wget https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v7.6/fahclient_7.6.13_amd64.deb
       - run: sudo dpkg -i fahclient_7.6.13_amd64.deb
+      - run: FAHClient --send-command pause
       - run: go test -v
