@@ -54,9 +54,15 @@ func (a *APITestSuite) TestAPI() {
 }
 
 func (a *APITestSuite) TestExec() {
-	result, err := a.api.Exec("")
-	assert.Equal(a.T(), "", result)
-	assert.Nil(a.T(), err)
+	{
+		result, err := a.api.Exec("")
+		assert.Equal(a.T(), "", result)
+		assert.Nil(a.T(), err)
+	}
+	{
+		_, err := a.api.Exec("\n")
+		assert.NotNil(a.T(), err)
+	}
 }
 
 func (a *APITestSuite) TestExecEval() {
