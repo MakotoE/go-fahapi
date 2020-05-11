@@ -40,10 +40,14 @@ func TestAPITestSuite(t *testing.T) {
 	suite.Run(t, &APITestSuite{})
 }
 
-func (a *APITestSuite) SetupTest() {
+func (a *APITestSuite) SetupSuite() {
 	api, err := NewAPI(DefaultAddr)
 	require.Nil(a.T(), err)
 	a.api = api
+}
+
+func (a *APITestSuite) TearDownSuite() {
+	a.api.Close()
 }
 
 func (a *APITestSuite) TestAPI() {
