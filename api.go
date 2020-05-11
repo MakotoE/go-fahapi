@@ -72,6 +72,10 @@ func (a *API) Exec(command string) (string, error) {
 		return "", nil
 	}
 
+	if strings.ContainsRune(command, '\n') {
+		return "", errors.New("command contains newline")
+	}
+
 	a.messageMutex.Lock()
 	defer a.messageMutex.Unlock()
 
