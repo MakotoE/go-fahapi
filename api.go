@@ -88,7 +88,7 @@ func (a *API) ExecEval(command string) (string, error) {
 	}
 
 	// When using eval with a newline, the response contains an extra trailing backslash.
-	return strings.TrimSuffix(s, "\\"), nil
+	return strings.TrimSuffix(s, `\`), nil
 }
 
 // Help returns the FAH telnet API commands.
@@ -125,12 +125,7 @@ func (a *API) Uptime() (time.Duration, error) {
 		return 0, err
 	}
 
-	u, err := parseFAHDuration(s)
-	if err != nil {
-		return 0, err
-	}
-
-	return u, nil
+	return parseFAHDuration(s)
 }
 
 // OptionsGet gets the FAH client options.
