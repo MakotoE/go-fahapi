@@ -1,3 +1,4 @@
+// nolint:ineffassign,staticcheck
 package fahapi
 
 import (
@@ -404,5 +405,5 @@ func parseFAHDuration(s string) (time.Duration, error) {
 		return 0, errors.WithStack(err)
 	}
 
-	return duration + time.Duration(float64(time.Hour) * 24 * days), nil
+	return duration + time.Duration(float64(time.Hour)*24*days), nil
 }

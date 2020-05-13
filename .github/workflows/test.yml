@@ -19,3 +19,4 @@ jobs:
       - run: sudo dpkg -i fahclient_7.6.13_amd64.deb
       - run: FAHClient --send-command pause
       - run: go test -v --do-all-tests
+      - uses: actions-contrib/golangci-lint@v1

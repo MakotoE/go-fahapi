@@ -247,7 +247,7 @@ type caller struct {
 }
 
 func (c caller) CallTELNET(_ telnet.Context, w telnet.Writer, r telnet.Reader) {
-	readMessage(r) // Discard welcome message
+	_, _ = readMessage(r) // Discard welcome message
 	for {
 		b := bytes.NewBufferString(<-c.sendChan)
 		b.WriteString("\r\n")
