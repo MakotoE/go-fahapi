@@ -317,9 +317,11 @@ func (o *Options) fromMap(m map[string]string) error {
 	o.Service = isTrue(m["service"])
 	o.ServiceDescription = m["service-description"]
 	o.ServiceRestart = isTrue(m["service-restart"])
-	o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"]) // TODO can be empty
-	if err != nil {
-		return errors.WithStack(err)
+	if m["service-restart-delay"] != "" {
+		o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"])
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	o.SessionCookie = m["session-cookie"]
 	o.SessionLifetime, err = strconv.Atoi(m["session-lifetime"])
