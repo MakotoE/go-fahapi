@@ -108,8 +108,6 @@ func (a *APITestSuite) TestOptionsSetGet() {
 	assert.Nil(a.T(), a.api.OptionsSet("power", "LIGHT"))
 
 	newOptions := &Options{}
-	err := a.api.OptionsGet(newOptions)
-	fmt.Printf("%+v", err)
 	assert.Nil(a.T(), a.api.OptionsGet(newOptions))
 	assert.Equal(a.T(), PowerLight, newOptions.Power)
 
@@ -123,6 +121,7 @@ func (a *APITestSuite) TestPPD() {
 
 func (a *APITestSuite) TestQueueInfo() {
 	_, err := a.api.QueueInfo()
+	fmt.Printf("%+v", err)
 	assert.Nil(a.T(), err)
 }
 
