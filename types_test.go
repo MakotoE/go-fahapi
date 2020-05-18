@@ -60,7 +60,7 @@ func TestParseFAHDuration(t *testing.T) {
 		},
 		{
 			"1.5 days",
-			time.Hour*36,
+			time.Hour * 36,
 			false,
 		},
 	}
