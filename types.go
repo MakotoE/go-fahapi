@@ -366,8 +366,9 @@ const (
 	PowerFull   Power = "FULL"
 )
 
-func NewPower(s string) (Power, error) { // TODO lowercase
-	if s == string(PowerLight) || s == string(PowerMedium) || s == string(PowerFull) {
+func NewPower(s string) (Power, error) {
+	switch Power(strings.ToUpper(s)) {
+	case PowerLight, PowerMedium, PowerFull:
 		return Power(s), nil
 	}
 
