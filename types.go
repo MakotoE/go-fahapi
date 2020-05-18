@@ -317,7 +317,7 @@ func (o *Options) fromMap(m map[string]string) error {
 	o.Service = isTrue(m["service"])
 	o.ServiceDescription = m["service-description"]
 	o.ServiceRestart = isTrue(m["service-restart"])
-	o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"])
+	o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"]) // TODO can be empty
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -364,7 +364,7 @@ const (
 	PowerFull   Power = "FULL"
 )
 
-func NewPower(s string) (Power, error) {
+func NewPower(s string) (Power, error) { // TODO lowercase
 	if s == string(PowerLight) || s == string(PowerMedium) || s == string(PowerFull) {
 		return Power(s), nil
 	}
@@ -408,8 +408,8 @@ type slotQueueInfoRaw struct {
 
 type SlotQueueInfo struct {
 	ID             string
-	State          string // TODO create enum type (need official documentation to know every possible value)
-	Error          string // This should also be enum
+	State          string
+	Error          string
 	Project        int
 	Run            int
 	Clone          int
