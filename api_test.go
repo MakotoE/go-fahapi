@@ -121,7 +121,6 @@ func (a *APITestSuite) TestPPD() {
 
 func (a *APITestSuite) TestQueueInfo() {
 	_, err := a.api.QueueInfo()
-	fmt.Printf("%+v", err)
 	assert.Nil(a.T(), err)
 }
 
