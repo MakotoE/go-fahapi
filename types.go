@@ -317,9 +317,11 @@ func (o *Options) fromMap(m map[string]string) error {
 	o.Service = isTrue(m["service"])
 	o.ServiceDescription = m["service-description"]
 	o.ServiceRestart = isTrue(m["service-restart"])
-	o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"]) // TODO can be empty
-	if err != nil {
-		return errors.WithStack(err)
+	if m["service-restart-delay"] != "" {
+		o.ServiceRestartDelay, err = strconv.Atoi(m["service-restart-delay"])
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	o.SessionCookie = m["session-cookie"]
 	o.SessionLifetime, err = strconv.Atoi(m["session-lifetime"])
@@ -364,8 +366,9 @@ const (
 	PowerFull   Power = "FULL"
 )
 
-func NewPower(s string) (Power, error) { // TODO lowercase
-	if s == string(PowerLight) || s == string(PowerMedium) || s == string(PowerFull) {
+func NewPower(s string) (Power, error) {
+	switch Power(strings.ToUpper(s)) {
+	case PowerLight, PowerMedium, PowerFull:
 		return Power(s), nil
 	}
 
@@ -510,7 +513,7 @@ var parseFAHDurationReplacer = strings.NewReplacer(
 	"sec", "s",
 )
 
-func parseFAHDuration(s string) (time.Duration, error) {
+func parseFAHDuration(s string) (time.Duration, error) { // TODO s can be "unknowntime"
 	shortened := parseFAHDurationReplacer.Replace(s)
 	dIndex := strings.IndexByte(shortened, 'd')
 	days := 0.0
