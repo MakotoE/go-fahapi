@@ -547,12 +547,12 @@ func parseFAHDuration(s string) (FAHDuration, error) {
 	return FAHDuration(duration + time.Duration(float64(time.Hour)*24*days)), nil
 }
 
-func (f FAHDuration) Unknown() bool {
+func (f FAHDuration) UnknownTime() bool {
 	return f == unknowntime
 }
 
 func (f FAHDuration) String() string {
-	if f.Unknown() {
+	if f.UnknownTime() {
 		return unknowntimeStr
 	}
 

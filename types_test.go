@@ -80,12 +80,12 @@ func TestParseFAHDuration(t *testing.T) {
 func TestFAHDuration_String(t *testing.T) {
 	{
 		d := FAHDuration(1)
-		assert.False(t, d.Unknown())
+		assert.False(t, d.UnknownTime())
 		assert.NotEqual(t, "unknowntime", d.String())
 	}
 	{
 		d := FAHDuration(-1)
-		assert.True(t, d.Unknown())
+		assert.True(t, d.UnknownTime())
 		assert.Equal(t, "unknowntime", d.String())
 	}
 }
