@@ -63,6 +63,11 @@ func TestParseFAHDuration(t *testing.T) {
 			time.Hour * 36,
 			false,
 		},
+		{
+			"unknowntime",
+			-1,
+			false,
+		},
 	}
 
 	for i, test := range tests {

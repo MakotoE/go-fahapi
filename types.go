@@ -513,8 +513,12 @@ var parseFAHDurationReplacer = strings.NewReplacer(
 	"sec", "s",
 )
 
-func parseFAHDuration(s string) (time.Duration, error) { // TODO s can be "unknowntime"
+func parseFAHDuration(s string) (time.Duration, error) {
 	shortened := parseFAHDurationReplacer.Replace(s)
+	if shortened == "unknowntime" {
+		return -1, nil
+	}
+
 	dIndex := strings.IndexByte(shortened, 'd')
 	days := 0.0
 	if dIndex > -1 {
