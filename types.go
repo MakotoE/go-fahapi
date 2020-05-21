@@ -503,10 +503,6 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 
 type FAHDuration time.Duration
 
-func (f FAHDuration) Unknown() bool {
-	return f == -1
-}
-
 var parseFAHDurationReplacer = strings.NewReplacer(
 	" ", "",
 	"days", "d",
@@ -545,4 +541,16 @@ func parseFAHDuration(s string) (FAHDuration, error) {
 	}
 
 	return FAHDuration(duration + time.Duration(float64(time.Hour)*24*days)), nil
+}
+
+func (f FAHDuration) Unknown() bool {
+	return f == -1
+}
+
+func (f FAHDuration) String() string {
+	if f.Unknown() {
+		return "unknowntime"
+	}
+
+	return time.Duration(f).String()
 }
