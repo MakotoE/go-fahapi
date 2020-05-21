@@ -81,11 +81,11 @@ func TestFAHDuration_String(t *testing.T) {
 	{
 		d := FAHDuration(1)
 		assert.False(t, d.Unknown())
-		assert.NotEqual(t, "unknowntime", d.String())
+		assert.NotEqual(t, unknowntimeStr, d.String())
 	}
 	{
 		d := FAHDuration(-1)
 		assert.True(t, d.Unknown())
-		assert.Equal(t, "unknowntime", d.String())
+		assert.Equal(t, unknowntimeStr, d.String())
 	}
 }

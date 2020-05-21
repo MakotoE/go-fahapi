@@ -515,9 +515,11 @@ var parseFAHDurationReplacer = strings.NewReplacer(
 	"sec", "s",
 )
 
+const unknowntimeStr = "unknowntime"
+
 func parseFAHDuration(s string) (FAHDuration, error) {
 	shortened := parseFAHDurationReplacer.Replace(s)
-	if shortened == "unknowntime" {
+	if shortened == unknowntimeStr {
 		return -1, nil
 	}
 
@@ -549,7 +551,7 @@ func (f FAHDuration) Unknown() bool {
 
 func (f FAHDuration) String() string {
 	if f.Unknown() {
-		return "unknowntime"
+		return unknowntimeStr
 	}
 
 	return time.Duration(f).String()
