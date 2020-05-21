@@ -420,12 +420,12 @@ type SlotQueueInfo struct {
 	Core           string
 	Unit           string
 	PercentDone    string
-	ETA            time.Duration
+	ETA            FAHDuration
 	PPD            int
 	CreditEstimate int
 	WaitingOn      string
-	NextAttempt    time.Duration
-	TimeRemaining  time.Duration
+	NextAttempt    FAHDuration
+	TimeRemaining  FAHDuration
 	TotalFrames    int
 	FramesDone     int
 	Assigned       time.Time
@@ -435,7 +435,7 @@ type SlotQueueInfo struct {
 	CS             string
 	Attempts       int
 	Slot           string
-	TPF            time.Duration
+	TPF            FAHDuration
 	BaseCredit     int
 }
 
@@ -474,7 +474,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	}
 	s.TotalFrames = r.TotalFrames
 	s.FramesDone = r.FramesDone
-	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned)
+	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned) // TODO time can be "<invalid>" https://github.com/MakotoE/go-fahapi/pull/29/checks?check_run_id=697650084
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -501,6 +501,8 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	return errors.WithStack(err)
 }
 
+type FAHDuration time.Duration
+
 var parseFAHDurationReplacer = strings.NewReplacer(
 	" ", "",
 	"days", "d",
@@ -513,8 +515,16 @@ var parseFAHDurationReplacer = strings.NewReplacer(
 	"sec", "s",
 )
 
-func parseFAHDuration(s string) (time.Duration, error) { // TODO s can be "unknowntime"
+const unknowntime = FAHDuration(-1)
+
+const unknowntimeStr = "unknowntime"
+
+func parseFAHDuration(s string) (FAHDuration, error) {
 	shortened := parseFAHDurationReplacer.Replace(s)
+	if shortened == unknowntimeStr {
+		return unknowntime, nil
+	}
+
 	dIndex := strings.IndexByte(shortened, 'd')
 	days := 0.0
 	if dIndex > -1 {
@@ -525,7 +535,7 @@ func parseFAHDuration(s string) (time.Duration, error) { // TODO s can be "unkno
 		days = daysTemp
 
 		if dIndex >= len(shortened)-1 { // s only contains days
-			return time.Duration(float64(time.Hour) * 24 * days), nil
+			return FAHDuration(float64(time.Hour) * 24 * days), nil
 		}
 	}
 
@@ -534,5 +544,17 @@ func parseFAHDuration(s string) (time.Duration, error) { // TODO s can be "unkno
 		return 0, errors.WithStack(err)
 	}
 
-	return duration + time.Duration(float64(time.Hour)*24*days), nil
+	return FAHDuration(duration + time.Duration(float64(time.Hour)*24*days)), nil
+}
+
+func (f FAHDuration) UnknownTime() bool {
+	return f == unknowntime
+}
+
+func (f FAHDuration) String() string {
+	if f.UnknownTime() {
+		return unknowntimeStr
+	}
+
+	return time.Duration(f).String()
 }

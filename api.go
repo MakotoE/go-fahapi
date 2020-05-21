@@ -11,7 +11,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
@@ -123,7 +122,7 @@ func (a *API) NumSlots() (int, error) {
 }
 
 // Uptime returns FAH uptime.
-func (a *API) Uptime() (time.Duration, error) {
+func (a *API) Uptime() (FAHDuration, error) {
 	s, err := a.ExecEval("uptime")
 	if err != nil {
 		return 0, err
