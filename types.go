@@ -474,7 +474,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	}
 	s.TotalFrames = r.TotalFrames
 	s.FramesDone = r.FramesDone
-	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned)
+	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned) // TODO time can be "<invalid>" https://github.com/MakotoE/go-fahapi/pull/29/checks?check_run_id=697650084
 	if err != nil {
 		return errors.WithStack(err)
 	}
