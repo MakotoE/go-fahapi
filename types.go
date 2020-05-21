@@ -420,12 +420,12 @@ type SlotQueueInfo struct {
 	Core           string
 	Unit           string
 	PercentDone    string
-	ETA            time.Duration
+	ETA            FAHDuration
 	PPD            int
 	CreditEstimate int
 	WaitingOn      string
-	NextAttempt    time.Duration
-	TimeRemaining  time.Duration
+	NextAttempt    FAHDuration
+	TimeRemaining  FAHDuration
 	TotalFrames    int
 	FramesDone     int
 	Assigned       time.Time
@@ -435,7 +435,7 @@ type SlotQueueInfo struct {
 	CS             string
 	Attempts       int
 	Slot           string
-	TPF            time.Duration
+	TPF            FAHDuration
 	BaseCredit     int
 }
 
@@ -501,6 +501,12 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	return errors.WithStack(err)
 }
 
+type FAHDuration time.Duration
+
+func (f FAHDuration) Unknown() bool {
+	return f == -1
+}
+
 var parseFAHDurationReplacer = strings.NewReplacer(
 	" ", "",
 	"days", "d",
@@ -513,7 +519,7 @@ var parseFAHDurationReplacer = strings.NewReplacer(
 	"sec", "s",
 )
 
-func parseFAHDuration(s string) (time.Duration, error) {
+func parseFAHDuration(s string) (FAHDuration, error) {
 	shortened := parseFAHDurationReplacer.Replace(s)
 	if shortened == "unknowntime" {
 		return -1, nil
@@ -529,7 +535,7 @@ func parseFAHDuration(s string) (time.Duration, error) {
 		days = daysTemp
 
 		if dIndex >= len(shortened)-1 { // s only contains days
-			return time.Duration(float64(time.Hour) * 24 * days), nil
+			return FAHDuration(float64(time.Hour) * 24 * days), nil
 		}
 	}
 
@@ -538,5 +544,5 @@ func parseFAHDuration(s string) (time.Duration, error) {
 		return 0, errors.WithStack(err)
 	}
 
-	return duration + time.Duration(float64(time.Hour)*24*days), nil
+	return FAHDuration(duration + time.Duration(float64(time.Hour)*24*days)), nil
 }

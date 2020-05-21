@@ -10,7 +10,7 @@ import (
 func TestParseFAHDuration(t *testing.T) {
 	tests := []struct {
 		s           string
-		expected    time.Duration
+		expected    FAHDuration
 		expectError bool
 	}{
 		{
@@ -40,27 +40,27 @@ func TestParseFAHDuration(t *testing.T) {
 		},
 		{
 			"1day",
-			time.Hour * 24,
+			FAHDuration(time.Hour * 24),
 			false,
 		},
 		{
 			"2 days",
-			time.Hour * 24 * 2,
+			FAHDuration(time.Hour * 24 * 2),
 			false,
 		},
 		{
 			"1 sec",
-			time.Second,
+			FAHDuration(time.Second),
 			false,
 		},
 		{
 			"1 day 1 sec",
-			time.Hour*24 + time.Second,
+			FAHDuration(time.Hour*24 + time.Second),
 			false,
 		},
 		{
 			"1.5 days",
-			time.Hour * 36,
+			FAHDuration(time.Hour * 36),
 			false,
 		},
 		{
