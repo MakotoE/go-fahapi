@@ -1,9 +1,9 @@
-  auth                        Authenticate.
-  error                       Error message.
-  exit                        Exit the command processor
-  heartbeat                   Prints an increasing hearbeat count.
+  auth                        Authenticate. [What does this do?]
+  error                       Error message. [Not needed]
+  exit                        Exit the command processor [Not needed]
+  heartbeat                   Prints an increasing hearbeat count. [Hard to implement]
   log-updates start | restart | stop Enable/diable log updates.
-  quit                        Exit the command processor
+  quit                        Exit the command processor [Not needed]
   screensaver                 Unpause all slots which are paused waiting for a
                               screensaver and pause them again on disconnect.
   updates add <id> <rate> <expression> | del <id> | list | clear | reset Enable/disable
@@ -75,7 +75,7 @@ Folding@home Client:
   uptime                      Print application uptime
   wait-for-units              Wait for all running units to finish.
 
-Standard Commands:
+Standard Commands: [Don't implement these]
   add <number> <number>       Add two values
   clear                       Clear the screen
   date [format]               Print the date and time. Optionally, with
