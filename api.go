@@ -9,6 +9,8 @@ import (
 	"github.com/reiver/go-telnet"
 	"io"
 	"log"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -92,6 +94,68 @@ func (a *API) ExecEval(command string) (string, error) {
 
 	// When using eval with a newline, the response contains an extra trailing backslash.
 	return strings.TrimSuffix(s, `\`), nil
+}
+
+type LogUpdatesArg string
+
+const (
+	LogUpdatesStart   = LogUpdatesArg("start")
+	LogUpdatesRestart = LogUpdatesArg("restart")
+	LogUpdatesStop    = LogUpdatesArg("stop")
+)
+
+// LogUpdates enables or disables log updates. Returns current log. Not goroutine safe.
+func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
+	/*
+		This command is weird. It returns the log after the next prompt, like this:
+		> log-updates start
+
+		>
+		PyON 1 log-update...
+	*/
+	_, err := a.Exec(fmt.Sprintf("log-updates %s", arg))
+	if err != nil {
+		return "", err
+	}
+
+	s, err := a.ExecEval("eval")
+	if err != nil {
+		return "", nil
+	}
+
+	// The string contains a bunch of \x00 sequences that are not valid JSON and cannot be
+	// unmarshalled using unmarshalPyON().
+	trimmed := s[strings.IndexByte(s, '\n')+1 : len(s)-len("\n---\n\n")]
+	return parsePyONString(trimmed)
+}
+
+var matchEscaped = regexp.MustCompile(`\\x..|\\n|\\r|\\"|\\\\`)
+
+func parsePyONString(s string) (string, error) {
+	if len(s) < 2 || s[0] != '"' || s[len(s)-1] != '"' {
+		return "", errors.New("s is not a valid PyON string")
+	}
+
+	replaceFunc := func(s string) string {
+		switch s {
+		case `\n`:
+			return "\n"
+		case `\r`:
+			return "\r"
+		case `\"`:
+			return `"`
+		case `\\`:
+			return `\`
+		}
+
+		n, err := strconv.ParseInt(s[2:], 16, 32)
+		if err != nil {
+			return s
+		}
+
+		return string(rune(n))
+	}
+	return matchEscaped.ReplaceAllStringFunc(s[1:len(s)-1], replaceFunc), nil
 }
 
 // Help returns the FAH telnet API commands.
@@ -291,6 +355,7 @@ var unmarshalPyONReplacer = strings.NewReplacer(
 )
 
 func unmarshalPyON(s string, dst interface{}) error {
+	// https://pypi.org/project/pon/
 	if !strings.HasPrefix(s, "PyON") || !strings.HasSuffix(s, "\n---") {
 		return errors.Errorf("invalid PyON format: %s", s)
 	}

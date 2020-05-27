@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 		&doAllTests,
 		"do-all-tests",
 		false,
-		"Do tests that will modify your FAH settings.",
+		"Run tests that will modify your FAH settings.",
 	)
 	// I couldn't use Docker for testing. https://github.com/MakotoE/go-fahapi/issues/19
 	flag.Parse()
@@ -74,6 +74,60 @@ func (a *APITestSuite) TestExecEval() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestLogUpdates() {
+	if !doAllTests {
+		return
+	}
+
+	log, err := a.api.LogUpdates(LogUpdatesStart)
+	assert.Nil(a.T(), err)
+	assert.NotEmpty(a.T(), log)
+}
+
+func TestParsePyONString(t *testing.T) {
+	tests := []struct {
+		s           string
+		expected    string
+		expectError bool
+	}{
+		{
+			``,
+			"",
+			true,
+		},
+		{
+			`""`,
+			"",
+			false,
+		},
+		{
+			`"\n\"\\\x01"`,
+			"\n\"\\\x01",
+			false,
+		},
+		{
+			`"a\x01a"`,
+			"a\x01a",
+			false,
+		},
+	}
+
+	for i, test := range tests {
+		result, err := parsePyONString(test.s)
+		assert.Equal(t, test.expected, result, i)
+		checkerror.Check(t, test.expectError, err, i)
+	}
+}
+
+func BenchmarkParsePyONString(b *testing.B) {
+	// BenchmarkParsePyONString-8   	 1555113	       762 ns/op
+	var result string
+	for i := 0; i < b.N; i++ {
+		result, _ = parsePyONString("a\x01\\n")
+	}
+	_ = result
+}
+
 func (a *APITestSuite) TestHelp() {
 	result, err := a.api.Help()
 	assert.NotEqual(a.T(), "", result)
@@ -81,7 +135,8 @@ func (a *APITestSuite) TestHelp() {
 }
 
 func (a *APITestSuite) TestInfo() {
-	_, err := a.api.Info()
+	result, err := a.api.Info()
+	assert.NotEmpty(a.T(), result)
 	assert.Nil(a.T(), err)
 }
 
