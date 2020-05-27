@@ -474,15 +474,15 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	}
 	s.TotalFrames = r.TotalFrames
 	s.FramesDone = r.FramesDone
-	s.Assigned, err = time.Parse(time.RFC3339, r.Assigned) // TODO time can be "<invalid>" https://github.com/MakotoE/go-fahapi/pull/29/checks?check_run_id=697650084
+	s.Assigned, err = parseFAHTime(r.Assigned)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	s.Timeout, err = time.Parse(time.RFC3339, r.Timeout)
+	s.Timeout, err = parseFAHTime(r.Timeout)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	s.Deadline, err = time.Parse(time.RFC3339, r.Deadline)
+	s.Deadline, err = parseFAHTime(r.Deadline)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -499,6 +499,14 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 		return errors.WithStack(err)
 	}
 	return errors.WithStack(err)
+}
+
+func parseFAHTime(s string) (time.Time, error) {
+	if s == "<invalid>" {
+		return time.Time{}, nil
+	}
+
+	return time.Parse(time.RFC3339, s)
 }
 
 type FAHDuration time.Duration

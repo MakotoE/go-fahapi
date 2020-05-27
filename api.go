@@ -279,7 +279,7 @@ func readMessage(r telnet.Reader) (string, error) {
 
 		const endOfMessage = "\n> "
 		if strings.HasSuffix(buffer.String(), endOfMessage) {
-			return strings.TrimPrefix(strings.TrimSuffix(buffer.String(), "\n> "), "\n"), nil
+			return strings.TrimPrefix(strings.TrimSuffix(buffer.String(), endOfMessage), "\n"), nil
 		}
 	}
 }
