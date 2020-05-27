@@ -74,14 +74,22 @@ func (a *APITestSuite) TestExecEval() {
 	assert.Nil(a.T(), err)
 }
 
-func (a *APITestSuite) TestLogUpdates() {
+func TestAPI_LogUpdates(t *testing.T) {
+	// This test is not in a suite because it is not goroutine safe.
+	if testing.Short() {
+		t.Skip()
+	}
+
 	if !doAllTests {
 		return
 	}
 
-	log, err := a.api.LogUpdates(LogUpdatesStart)
-	assert.Nil(a.T(), err)
-	assert.NotEmpty(a.T(), log)
+	api, err := NewAPI(DefaultAddr)
+	require.Nil(t, err)
+
+	log, err := api.LogUpdates(LogUpdatesStart)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, log)
 }
 
 func TestParsePyONString(t *testing.T) {

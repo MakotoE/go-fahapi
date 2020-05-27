@@ -252,8 +252,6 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 		return nil, err
 	}
 
-	fmt.Println(s)
-
 	var raw []slotQueueInfoRaw
 	if err := unmarshalPyON(s, &raw); err != nil {
 		return nil, err
