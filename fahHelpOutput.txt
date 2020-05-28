@@ -1,13 +1,13 @@
   auth                        Authenticate. [What does this do?]
   error                       Error message. [Not needed]
   exit                        Exit the command processor [Not needed]
-  heartbeat                   Prints an increasing hearbeat count. [Hard to implement]
-  log-updates start | restart | stop Enable/diable log updates.
+  heartbeat                   Prints an increasing hearbeat count. [Not doing this]
+  log-updates start | restart | stop Enable/diable log updates. [Done]
   quit                        Exit the command processor [Not needed]
   screensaver                 Unpause all slots which are paused waiting for a
-                              screensaver and pause them again on disconnect.
+                              screensaver and pause them again on disconnect. [Done]
   updates add <id> <rate> <expression> | del <id> | list | clear | reset Enable/disable
-                              updates.
+                              updates. [What is this?]
 
 Folding@home Client:
   always_on [slot]            Set all or one slot(s) always on.
@@ -19,15 +19,15 @@ Folding@home Client:
   download-core <type> <url>  Download a core.
   finish [slot]               Finish all or one slot(s).
   get-info <category> <key>   Print application information
-  info                        Print application information in PyON format
+  info                        Print application information in PyON format [Done]
   inject <ip>:<port> <input> [output] [ip:port] Inject a packet file to a
                               listening debug socket. Will wait until packet is
                               processed.
   mask-unit-state             Disable specified unit states.
-  num-slots                   Get number of slots in PyON format.
+  num-slots                   Get number of slots in PyON format. [Done]
   on_idle [slot]              Set all or one slot(s) on idle.
-  option <name> [value]       Get or set a configuration option
-  options                     List or set options with their values.
+  option <name> [value]       Get or set a configuration option [Done]
+  options                     List or set options with their values. [Done]
                               If no name arguments are given then all options
                               with non-default values will be listed. If the
                               '-d' argument is given then even defaulted options
@@ -47,9 +47,9 @@ Folding@home Client:
                               listed.
                               Options are listed as a PyON format dictionary.[-d
                               | -a] | [<name>[! | =<value>]]...
-  pause [slot]                Pause all or one slot(s).
-  ppd                         Get current total estimated Points Per Day.
-  queue-info                  Get work unit queue information in PyON format.
+  pause [slot]                Pause all or one slot(s). [Done]
+  ppd                         Get current total estimated Points Per Day. [Done]
+  queue-info                  Get work unit queue information in PyON format. [Done]
   request-id                  Request an ID from the assignment server.
   request-ws                  Request work server assignment from the assignment
                               server.
@@ -62,7 +62,7 @@ Folding@home Client:
                               the new slot can be provided.
   slot-delete <slot>          Delete a slot. If it is running a unit it will be
                               stopped.
-  slot-info                   Get slot information in PyON format.
+  slot-info                   Get slot information in PyON format. [Done]
   slot-modify <id> <type> [<name><! | =<value>>]... Modify an existing slot.
                               Configuration options can be either set or reset
                               using the same syntax used by the 'options'
@@ -71,8 +71,8 @@ Folding@home Client:
                               See 'options' help for a description of the
                               remaining arguments.
   trajectory <slot id>        Get current protein trajectory.
-  unpause [slot]              Unpause all or one slot(s).
-  uptime                      Print application uptime
+  unpause [slot]              Unpause all or one slot(s). [Done]
+  uptime                      Print application uptime [Done]
   wait-for-units              Wait for all running units to finish.
 
 Standard Commands: [Don't implement these]
