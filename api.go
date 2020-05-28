@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
@@ -335,6 +336,48 @@ func (a *API) RequestWS() error {
 func (a *API) Shutdown() error {
 	_, err := a.Exec("shutdown")
 	return err
+}
+
+type SimulationInfo struct {
+	User            string `json:"user"`
+	Team            string `json:"team"`
+	Project         int    `json:"project"`
+	Run             int    `json:"run"`
+	Clone           int    `json:"clone"`
+	Gen             int    `json:"gen"`
+	CoreType        int    `json:"core_type"`
+	Core            string `json:"core"`
+	TotalIterations int    `json:"total_iterations"`
+	IterationsDone  int    `json:"iterations_done"`
+	Energy          int    `json:"energy"`
+	Temperature     int    `json:"temperature"`
+	StartTimeStr    string `json:"start_time"`
+	StartTime       time.Time
+	Timeout         int     `json:"timeout"`
+	Deadline        int     `json:"deadline"`
+	ETA             int     `json:"eta"`
+	Progress        float64 `json:"progress"`
+	Slot            int     `json:"slot"`
+}
+
+// SimulationInfo returns the simulation information for a slot.
+func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
+	s, err := a.Exec(fmt.Sprintf("simulation-info %d", slot))
+	if err != nil {
+		return err
+	}
+
+	if err := unmarshalPyON(s, dst); err != nil {
+		return err
+	}
+
+	startTime, err := parseFAHTime(dst.StartTimeStr)
+	if err != nil {
+		return err
+	}
+
+	dst.StartTime = startTime
+	return nil
 }
 
 type SlotInfo struct {

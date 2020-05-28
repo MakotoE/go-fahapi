@@ -243,6 +243,10 @@ func (a *APITestSuite) TestRequestWS() {
 	assert.Nil(a.T(), a.api.RequestWS())
 }
 
+func (a *APITestSuite) TestSimulationInfo() {
+	assert.Nil(a.T(), a.api.SimulationInfo(0, &SimulationInfo{}))
+}
+
 func (a *APITestSuite) TestSlotInfo() {
 	_, err := a.api.SlotInfo()
 	assert.Nil(a.T(), err)
