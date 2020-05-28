@@ -46,13 +46,13 @@ Folding@home Client:
                               Options which are set or reset will also be
                               listed.
                               Options are listed as a PyON format dictionary.[-d
-                              | -a] | [<name>[! | =<value>]]...
+                              | -a] | [<name>[! | =<value>]]... [Done]
   pause [slot]                Pause all or one slot(s). [Done]
   ppd                         Get current total estimated Points Per Day. [Done]
   queue-info                  Get work unit queue information in PyON format. [Done]
-  request-id                  Request an ID from the assignment server.
+  request-id                  Request an ID from the assignment server. [Done]
   request-ws                  Request work server assignment from the assignment
-                              server.
+                              server. [Done]
   save [file]                 Save the configuration either to the specified
                               file or to the file the configuration was last
                               loaded from.

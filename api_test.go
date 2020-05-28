@@ -207,11 +207,6 @@ func (a *APITestSuite) TestOnIdle() {
 	assert.Nil(a.T(), a.api.OnIdle(0))
 }
 
-func (a *APITestSuite) TestUptime() {
-	_, err := a.api.Uptime()
-	assert.Nil(a.T(), err)
-}
-
 func (a *APITestSuite) TestOptionsSetGet() {
 	if !doAllTests {
 		return
@@ -241,6 +236,22 @@ func (a *APITestSuite) TestQueueInfo() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestRequestID() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.RequestID())
+}
+
+func (a *APITestSuite) TestRequestWS() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.RequestWS())
+}
+
 func (a *APITestSuite) TestSlotInfo() {
 	_, err := a.api.SlotInfo()
 	assert.Nil(a.T(), err)
@@ -253,6 +264,11 @@ func (a *APITestSuite) TestPauseUnpause() {
 
 	assert.Nil(a.T(), a.api.PauseAll())
 	assert.Nil(a.T(), a.api.UnpauseAll())
+}
+
+func (a *APITestSuite) TestUptime() {
+	_, err := a.api.Uptime()
+	assert.Nil(a.T(), err)
 }
 
 func TestReadMessage(t *testing.T) {

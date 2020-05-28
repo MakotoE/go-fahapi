@@ -248,16 +248,6 @@ func (a *API) OnIdleAll() error {
 	return err
 }
 
-// Uptime returns FAH uptime.
-func (a *API) Uptime() (FAHDuration, error) {
-	s, err := a.ExecEval("uptime")
-	if err != nil {
-		return 0, err
-	}
-
-	return parseFAHDuration(s)
-}
-
 // OptionsGet gets the FAH client options.
 func (a *API) OptionsGet(dst *Options) error {
 	s, err := a.Exec("options -a")
@@ -329,6 +319,17 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 	return result, nil
 }
 
+// RequestID requests an ID from the assignment server.
+func (a *API) RequestID() error {
+	_, err := a.Exec("request-id")
+	return err
+}
+
+func (a *API) RequestWS() error {
+	_, err := a.Exec("request-ws")
+	return err
+}
+
 // Shutdown ends all FAH processes.
 func (a *API) Shutdown() error {
 	_, err := a.Exec("shutdown")
@@ -365,6 +366,16 @@ func (a *API) UnpauseAll() error {
 func (a *API) UnpauseSlot(slot int) error {
 	_, err := a.Exec(fmt.Sprintf("unpause %d", slot))
 	return err
+}
+
+// Uptime returns FAH uptime.
+func (a *API) Uptime() (FAHDuration, error) {
+	s, err := a.ExecEval("uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	return parseFAHDuration(s)
 }
 
 type caller struct {
