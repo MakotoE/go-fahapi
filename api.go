@@ -202,6 +202,18 @@ func (a *API) DownloadCore(coreType string, url *url.URL) error {
 	return err
 }
 
+// Finish pauses a slot when its current work unit is completed.
+func (a *API) Finish(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("finish %d", slot))
+	return err
+}
+
+// FinishAll pauses all slots individually when their current work unit is completed.
+func (a *API) FinishAll() error {
+	_, err := a.Exec("finish")
+	return err
+}
+
 // Info returns FAH build and machine info.
 func (a *API) Info() ([][]interface{}, error) {
 	s, err := a.Exec("info")

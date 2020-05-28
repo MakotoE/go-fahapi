@@ -180,6 +180,14 @@ func (a *APITestSuite) TestDownloadCore() {
 	assert.Nil(a.T(), a.api.DownloadCore("type", &url.URL{}))
 }
 
+func (a *APITestSuite) TestFinish() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.Finish(0))
+}
+
 func (a *APITestSuite) TestInfo() {
 	result, err := a.api.Info()
 	assert.NotEmpty(a.T(), result)
