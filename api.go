@@ -236,6 +236,18 @@ func (a *API) NumSlots() (int, error) {
 	return n, unmarshalPyON(s, &n)
 }
 
+// OnIdle sets a slot to run only when idle.
+func (a *API) OnIdle(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("on_idle %d", slot))
+	return err
+}
+
+// OnIdle sets all slots to run only when idle.
+func (a *API) OnIdleAll() error {
+	_, err := a.Exec("on_idle")
+	return err
+}
+
 // Uptime returns FAH uptime.
 func (a *API) Uptime() (FAHDuration, error) {
 	s, err := a.ExecEval("uptime")

@@ -17,15 +17,15 @@ Folding@home Client:
                               set a user, team or passkey. [Done]
   do-cycle                    Run one client cycle. [Done]
   download-core <type> <url>  Download a core. [Done? I have no idea what this is supposed to do]
-  finish [slot]               Finish all or one slot(s).
-  get-info <category> <key>   Print application information
+  finish [slot]               Finish all or one slot(s). [Done]
+  get-info <category> <key>   Print application information [What is this?]
   info                        Print application information in PyON format [Done]
   inject <ip>:<port> <input> [output] [ip:port] Inject a packet file to a
                               listening debug socket. Will wait until packet is
-                              processed.
-  mask-unit-state             Disable specified unit states.
+                              processed. [What is this?]
+  mask-unit-state             Disable specified unit states. [Done]
   num-slots                   Get number of slots in PyON format. [Done]
-  on_idle [slot]              Set all or one slot(s) on idle.
+  on_idle [slot]              Set all or one slot(s) on idle. [Done]
   option <name> [value]       Get or set a configuration option [Done]
   options                     List or set options with their values. [Done]
                               If no name arguments are given then all options
