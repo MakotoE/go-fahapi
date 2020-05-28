@@ -98,10 +98,6 @@ func TestAPI_LogUpdates(t *testing.T) {
 	assert.NotEmpty(t, log)
 }
 
-func (a *APITestSuite) TestScreensaver() {
-	assert.Nil(a.T(), a.api.Screensaver())
-}
-
 func TestParsePyONString(t *testing.T) {
 	tests := []struct {
 		s           string
@@ -146,6 +142,43 @@ func BenchmarkParsePyONString(b *testing.B) {
 	_ = result
 }
 
+func (a *APITestSuite) TestScreensaver() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.Screensaver())
+}
+
+func (a *APITestSuite) TestAlwaysOn() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.AlwaysOn(0))
+}
+
+func (a *APITestSuite) TestConfigured() {
+	_, err := a.api.Configured()
+	assert.Nil(a.T(), err)
+}
+
+func (a *APITestSuite) TestDoCycle() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.DoCycle())
+}
+
+func (a *APITestSuite) TestFinish() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.Finish(0))
+}
+
 func (a *APITestSuite) TestInfo() {
 	result, err := a.api.Info()
 	assert.NotEmpty(a.T(), result)
@@ -157,9 +190,12 @@ func (a *APITestSuite) TestNumSlots() {
 	assert.Nil(a.T(), err)
 }
 
-func (a *APITestSuite) TestUptime() {
-	_, err := a.api.Uptime()
-	assert.Nil(a.T(), err)
+func (a *APITestSuite) TestOnIdle() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.OnIdle(0))
 }
 
 func (a *APITestSuite) TestOptionsSetGet() {
@@ -191,6 +227,22 @@ func (a *APITestSuite) TestQueueInfo() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestRequestID() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.RequestID())
+}
+
+func (a *APITestSuite) TestRequestWS() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.RequestWS())
+}
+
 func (a *APITestSuite) TestSlotInfo() {
 	_, err := a.api.SlotInfo()
 	assert.Nil(a.T(), err)
@@ -203,6 +255,11 @@ func (a *APITestSuite) TestPauseUnpause() {
 
 	assert.Nil(a.T(), a.api.PauseAll())
 	assert.Nil(a.T(), a.api.UnpauseAll())
+}
+
+func (a *APITestSuite) TestUptime() {
+	_, err := a.api.Uptime()
+	assert.Nil(a.T(), err)
 }
 
 func TestReadMessage(t *testing.T) {

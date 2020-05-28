@@ -9,6 +9,7 @@ import (
 	"github.com/reiver/go-telnet"
 	"io"
 	"log"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -163,8 +164,54 @@ func parsePyONString(s string) (string, error) {
 	return matchEscaped.ReplaceAllStringFunc(s[1:len(s)-1], replaceFunc), nil
 }
 
+// Screensaver unpauses all slots which are paused waiting for a screensaver and pause them again on
+// disconnect.
 func (a *API) Screensaver() error {
 	_, err := a.Exec("screensaver")
+	return err
+}
+
+// AlwaysOn sets a slot to be always on. (Not sure if this does anything at all.)
+func (a *API) AlwaysOn(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("always_on %d", slot))
+	return err
+}
+
+// Configured returns true if the client has set a user, team or passkey.
+func (a *API) Configured() (bool, error) {
+	s, err := a.Exec("configured")
+	if err != nil {
+		return false, err
+	}
+
+	result := false
+	if err := unmarshalPyON(s, &result); err != nil {
+		return false, err
+	}
+	return result, err
+}
+
+// DoCycle runs one client cycle.
+func (a *API) DoCycle() error {
+	_, err := a.Exec("do-cycle")
+	return err
+}
+
+// DownloadCore downloads a core. NOT TESTED.
+func (a *API) DownloadCore(coreType string, url *url.URL) error {
+	_, err := a.Exec(fmt.Sprintf("download-core %s %s", coreType, url.String()))
+	return err
+}
+
+// Finish pauses a slot when its current work unit is completed.
+func (a *API) Finish(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("finish %d", slot))
+	return err
+}
+
+// FinishAll pauses all slots individually when their current work unit is completed.
+func (a *API) FinishAll() error {
+	_, err := a.Exec("finish")
 	return err
 }
 
@@ -190,14 +237,16 @@ func (a *API) NumSlots() (int, error) {
 	return n, unmarshalPyON(s, &n)
 }
 
-// Uptime returns FAH uptime.
-func (a *API) Uptime() (FAHDuration, error) {
-	s, err := a.ExecEval("uptime")
-	if err != nil {
-		return 0, err
-	}
+// OnIdle sets a slot to run only when idle.
+func (a *API) OnIdle(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("on_idle %d", slot))
+	return err
+}
 
-	return parseFAHDuration(s)
+// OnIdle sets all slots to run only when idle.
+func (a *API) OnIdleAll() error {
+	_, err := a.Exec("on_idle")
+	return err
 }
 
 // OptionsGet gets the FAH client options.
@@ -271,6 +320,17 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 	return result, nil
 }
 
+// RequestID requests an ID from the assignment server.
+func (a *API) RequestID() error {
+	_, err := a.Exec("request-id")
+	return err
+}
+
+func (a *API) RequestWS() error {
+	_, err := a.Exec("request-ws")
+	return err
+}
+
 // Shutdown ends all FAH processes.
 func (a *API) Shutdown() error {
 	_, err := a.Exec("shutdown")
@@ -306,6 +366,22 @@ func (a *API) UnpauseAll() error {
 // UnpauseSlot unpauses a slot.
 func (a *API) UnpauseSlot(slot int) error {
 	_, err := a.Exec(fmt.Sprintf("unpause %d", slot))
+	return err
+}
+
+// Uptime returns FAH uptime.
+func (a *API) Uptime() (FAHDuration, error) {
+	s, err := a.ExecEval("uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	return parseFAHDuration(s)
+}
+
+// WaitForUnits blocks until all slots are paused.
+func (a *API) WaitForUnits() error {
+	_, err := a.Exec("wait-for-units")
 	return err
 }
 

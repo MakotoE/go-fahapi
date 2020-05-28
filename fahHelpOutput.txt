@@ -10,22 +10,22 @@
                               updates. [What is this?]
 
 Folding@home Client:
-  always_on [slot]            Set all or one slot(s) always on.
+  always_on [slot]            Set all or one slot(s) always on. [Done]
   bond <ip>:<port> <input> [output] [ip:port] Bond a packet file to a outgoing
-                              debug socket connection.
+                              debug socket connection. [What is this?]
   configured                  Return a PyON message indicating if the client has
-                              set a user, team or passkey.
-  do-cycle                    Run one client cycle.
-  download-core <type> <url>  Download a core.
-  finish [slot]               Finish all or one slot(s).
-  get-info <category> <key>   Print application information
+                              set a user, team or passkey. [Done]
+  do-cycle                    Run one client cycle. [Done]
+  download-core <type> <url>  Download a core. [Done? I have no idea what this is supposed to do]
+  finish [slot]               Finish all or one slot(s). [Done]
+  get-info <category> <key>   Print application information [What is this?]
   info                        Print application information in PyON format [Done]
   inject <ip>:<port> <input> [output] [ip:port] Inject a packet file to a
                               listening debug socket. Will wait until packet is
-                              processed.
-  mask-unit-state             Disable specified unit states.
+                              processed. [What is this?]
+  mask-unit-state             Disable specified unit states. [Done]
   num-slots                   Get number of slots in PyON format. [Done]
-  on_idle [slot]              Set all or one slot(s) on idle.
+  on_idle [slot]              Set all or one slot(s) on idle. [Done]
   option <name> [value]       Get or set a configuration option [Done]
   options                     List or set options with their values. [Done]
                               If no name arguments are given then all options
@@ -46,17 +46,17 @@ Folding@home Client:
                               Options which are set or reset will also be
                               listed.
                               Options are listed as a PyON format dictionary.[-d
-                              | -a] | [<name>[! | =<value>]]...
+                              | -a] | [<name>[! | =<value>]]... [Done]
   pause [slot]                Pause all or one slot(s). [Done]
   ppd                         Get current total estimated Points Per Day. [Done]
   queue-info                  Get work unit queue information in PyON format. [Done]
-  request-id                  Request an ID from the assignment server.
+  request-id                  Request an ID from the assignment server. [Done]
   request-ws                  Request work server assignment from the assignment
-                              server.
+                              server. [Done]
   save [file]                 Save the configuration either to the specified
                               file or to the file the configuration was last
-                              loaded from.
-  shutdown                    Shutdown the application
+                              loaded from. [Does this do anything?]
+  shutdown                    Shutdown the application [Done]
   simulation-info <slot id>   Get current simulation information.
   slot-add <type> [<name>=<value>]... Add a new slot. Configuration options for
                               the new slot can be provided.
@@ -73,7 +73,7 @@ Folding@home Client:
   trajectory <slot id>        Get current protein trajectory.
   unpause [slot]              Unpause all or one slot(s). [Done]
   uptime                      Print application uptime [Done]
-  wait-for-units              Wait for all running units to finish.
+  wait-for-units              Wait for all running units to finish. [Done]
 
 Standard Commands: [Don't implement these]
   add <number> <number>       Add two values
