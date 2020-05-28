@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -172,21 +171,13 @@ func (a *APITestSuite) TestDoCycle() {
 	assert.Nil(a.T(), a.api.DoCycle())
 }
 
-func (a *APITestSuite) TestDownloadCore() {
+func (a *APITestSuite) TestFinish() {
 	if !doAllTests {
 		return
 	}
 
-	assert.Nil(a.T(), a.api.DownloadCore("type", &url.URL{}))
+	assert.Nil(a.T(), a.api.Finish(0))
 }
-
-//func (a *APITestSuite) TestFinish() {
-//	if !doAllTests {
-//		return
-//	}
-//
-//	assert.Nil(a.T(), a.api.Finish(0))
-//}
 
 func (a *APITestSuite) TestInfo() {
 	result, err := a.api.Info()
