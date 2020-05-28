@@ -378,6 +378,12 @@ func (a *API) Uptime() (FAHDuration, error) {
 	return parseFAHDuration(s)
 }
 
+// WaitForUnits blocks until all slots are paused.
+func (a *API) WaitForUnits() error {
+	_, err := a.Exec("wait-for-units")
+	return err
+}
+
 type caller struct {
 	sendChan <-chan string
 	msgChan  chan<- message

@@ -55,8 +55,8 @@ Folding@home Client:
                               server. [Done]
   save [file]                 Save the configuration either to the specified
                               file or to the file the configuration was last
-                              loaded from.
-  shutdown                    Shutdown the application
+                              loaded from. [Does this do anything?]
+  shutdown                    Shutdown the application [Done]
   simulation-info <slot id>   Get current simulation information.
   slot-add <type> [<name>=<value>]... Add a new slot. Configuration options for
                               the new slot can be provided.
@@ -73,7 +73,7 @@ Folding@home Client:
   trajectory <slot id>        Get current protein trajectory.
   unpause [slot]              Unpause all or one slot(s). [Done]
   uptime                      Print application uptime [Done]
-  wait-for-units              Wait for all running units to finish.
+  wait-for-units              Wait for all running units to finish. [Done]
 
 Standard Commands: [Don't implement these]
   add <number> <number>       Add two values
