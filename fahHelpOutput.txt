@@ -10,13 +10,13 @@
                               updates. [What is this?]
 
 Folding@home Client:
-  always_on [slot]            Set all or one slot(s) always on.
+  always_on [slot]            Set all or one slot(s) always on. [Done]
   bond <ip>:<port> <input> [output] [ip:port] Bond a packet file to a outgoing
                               debug socket connection. [What is this?]
   configured                  Return a PyON message indicating if the client has
-                              set a user, team or passkey.
-  do-cycle                    Run one client cycle.
-  download-core <type> <url>  Download a core.
+                              set a user, team or passkey. [Done]
+  do-cycle                    Run one client cycle. [Done]
+  download-core <type> <url>  Download a core. [Done? I have no idea what this is supposed to do]
   finish [slot]               Finish all or one slot(s).
   get-info <category> <key>   Print application information
   info                        Print application information in PyON format [Done]

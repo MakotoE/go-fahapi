@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -161,6 +162,22 @@ func (a *APITestSuite) TestAlwaysOn() {
 func (a *APITestSuite) TestConfigured() {
 	_, err := a.api.Configured()
 	assert.Nil(a.T(), err)
+}
+
+func (a *APITestSuite) TestDoCycle() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.DoCycle())
+}
+
+func (a *APITestSuite) TestDownloadCore() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.DownloadCore("type", &url.URL{}))
 }
 
 func (a *APITestSuite) TestInfo() {

@@ -9,6 +9,7 @@ import (
 	"github.com/reiver/go-telnet"
 	"io"
 	"log"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -187,6 +188,18 @@ func (a *API) Configured() (bool, error) {
 		return false, err
 	}
 	return result, err
+}
+
+// DoCycle runs one client cycle.
+func (a *API) DoCycle() error {
+	_, err := a.Exec("do-cycle")
+	return err
+}
+
+// DownloadCore downloads a core. NOT TESTED.
+func (a *API) DownloadCore(coreType string, url *url.URL) error {
+	_, err := a.Exec(fmt.Sprintf("download-core %s %s", coreType, url.String()))
+	return err
 }
 
 // Info returns FAH build and machine info.
