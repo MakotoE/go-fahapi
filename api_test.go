@@ -98,10 +98,6 @@ func TestAPI_LogUpdates(t *testing.T) {
 	assert.NotEmpty(t, log)
 }
 
-func (a *APITestSuite) TestScreensaver() {
-	assert.Nil(a.T(), a.api.Screensaver())
-}
-
 func TestParsePyONString(t *testing.T) {
 	tests := []struct {
 		s           string
@@ -144,6 +140,27 @@ func BenchmarkParsePyONString(b *testing.B) {
 		result, _ = parsePyONString("a\x01\\n")
 	}
 	_ = result
+}
+
+func (a *APITestSuite) TestScreensaver() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.Screensaver())
+}
+
+func (a *APITestSuite) TestAlwaysOn() {
+	if !doAllTests {
+		return
+	}
+
+	assert.Nil(a.T(), a.api.AlwaysOn(0))
+}
+
+func (a *APITestSuite) TestConfigured() {
+	_, err := a.api.Configured()
+	assert.Nil(a.T(), err)
 }
 
 func (a *APITestSuite) TestInfo() {

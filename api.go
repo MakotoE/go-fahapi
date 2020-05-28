@@ -163,9 +163,30 @@ func parsePyONString(s string) (string, error) {
 	return matchEscaped.ReplaceAllStringFunc(s[1:len(s)-1], replaceFunc), nil
 }
 
+// Screensaver unpauses all slots which are paused waiting for a screensaver and pause them again on
+// disconnect.
 func (a *API) Screensaver() error {
 	_, err := a.Exec("screensaver")
 	return err
+}
+
+// AlwaysOn sets a slot to be always on. (Not sure if this does anything at all.)
+func (a *API) AlwaysOn(slot int) error {
+	_, err := a.Exec(fmt.Sprintf("always_on %d", slot))
+	return err
+}
+
+func (a *API) Configured() (bool, error) {
+	s, err := a.Exec("configured")
+	if err != nil {
+		return false, err
+	}
+
+	result := false
+	if err := unmarshalPyON(s, &result); err != nil {
+		return false, err
+	}
+	return result, err
 }
 
 // Info returns FAH build and machine info.
