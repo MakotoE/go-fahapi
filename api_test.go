@@ -74,6 +74,12 @@ func (a *APITestSuite) TestExecEval() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestHelp() {
+	result, err := a.api.Help()
+	assert.NotEqual(a.T(), "", result)
+	assert.Nil(a.T(), err)
+}
+
 func TestAPI_LogUpdates(t *testing.T) {
 	// This test is not in a suite because it is not goroutine safe.
 	if testing.Short() {
@@ -90,6 +96,10 @@ func TestAPI_LogUpdates(t *testing.T) {
 	log, err := api.LogUpdates(LogUpdatesStart)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, log)
+}
+
+func (a *APITestSuite) TestScreensaver() {
+	assert.Nil(a.T(), a.api.Screensaver())
 }
 
 func TestParsePyONString(t *testing.T) {
@@ -134,12 +144,6 @@ func BenchmarkParsePyONString(b *testing.B) {
 		result, _ = parsePyONString("a\x01\\n")
 	}
 	_ = result
-}
-
-func (a *APITestSuite) TestHelp() {
-	result, err := a.api.Help()
-	assert.NotEqual(a.T(), "", result)
-	assert.Nil(a.T(), err)
 }
 
 func (a *APITestSuite) TestInfo() {

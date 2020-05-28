@@ -96,6 +96,11 @@ func (a *API) ExecEval(command string) (string, error) {
 	return strings.TrimSuffix(s, `\`), nil
 }
 
+// Help returns the FAH telnet API commands.
+func (a *API) Help() (string, error) {
+	return a.Exec("help")
+}
+
 type LogUpdatesArg string
 
 const (
@@ -158,9 +163,9 @@ func parsePyONString(s string) (string, error) {
 	return matchEscaped.ReplaceAllStringFunc(s[1:len(s)-1], replaceFunc), nil
 }
 
-// Help returns the FAH telnet API commands.
-func (a *API) Help() (string, error) {
-	return a.Exec("help")
+func (a *API) Screensaver() error {
+	_, err := a.Exec("screensaver")
+	return err
 }
 
 // Info returns FAH build and machine info.
