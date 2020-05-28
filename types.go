@@ -1,4 +1,3 @@
-// nolint:ineffassign,staticcheck
 package fahapi
 
 import (
