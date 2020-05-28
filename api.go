@@ -177,6 +177,7 @@ func (a *API) AlwaysOn(slot int) error {
 	return err
 }
 
+// Configured returns true if the client has set a user, team or passkey.
 func (a *API) Configured() (bool, error) {
 	s, err := a.Exec("configured")
 	if err != nil {
