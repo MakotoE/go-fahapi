@@ -60,7 +60,7 @@ func (a *APITestSuite) TestAPI() {
 func (a *APITestSuite) TestExec() {
 	{
 		result, err := a.api.Exec("")
-		assert.Equal(a.T(), "", result)
+		assert.Equal(a.T(), []byte(nil), result)
 		assert.Nil(a.T(), err)
 	}
 	{
@@ -127,7 +127,7 @@ func TestParsePyONString(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		result, err := parsePyONString(test.s)
+		result, err := parsePyONString([]byte(test.s))
 		assert.Equal(t, test.expected, result, i)
 		checkerror.Check(t, test.expectError, err, i)
 	}
@@ -137,7 +137,7 @@ func BenchmarkParsePyONString(b *testing.B) {
 	// BenchmarkParsePyONString-8   	 1555113	       762 ns/op
 	var result string
 	for i := 0; i < b.N; i++ {
-		result, _ = parsePyONString("a\x01\\n")
+		result, _ = parsePyONString([]byte("a\x01\\n"))
 	}
 	_ = result
 }
@@ -269,26 +269,26 @@ func (a *APITestSuite) TestUptime() {
 func TestReadMessage(t *testing.T) {
 	tests := []struct {
 		r        telnet.Reader
-		expected string
+		expected []byte
 	}{
 		{
 			strings.NewReader(""),
-			"",
+			nil,
 		},
 		{
 			strings.NewReader("\n> "),
-			"",
+			[]byte(""),
 		},
 		{
 			strings.NewReader("a\n> \n> "),
-			"a",
+			[]byte("a"),
 		},
 	}
 
 	for i, test := range tests {
 		result, err := readMessage(test.r)
 		require.Nil(t, err)
-		assert.Equal(t, test.expected, result, i)
+		assert.Equal(t, []byte(test.expected), result, i)
 	}
 }
 
@@ -322,7 +322,16 @@ func TestUnmarshalPyON(t *testing.T) {
 
 	for i, test := range tests {
 		var dst interface{}
-		checkerror.Check(t, test.expectError, unmarshalPyON(test.s, &dst), i)
+		checkerror.Check(t, test.expectError, unmarshalPyON([]byte(test.s), &dst), i)
 		assert.Equal(t, test.expected, dst, i)
 	}
+}
+
+func BenchmarkUnparshalPyOn(b *testing.B) {
+	// BenchmarkUnparshalPyOn-8   	 3064592	       406 ns/op
+	var result struct{}
+	for i := 0; i < b.N; i++ {
+		_ = unmarshalPyON([]byte("PyON\n{}\n---"), &result)
+	}
+	_ = result
 }
