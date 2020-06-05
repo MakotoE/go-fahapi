@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/reiver/go-telnet"
 	"io"
-	"log"
+	"net"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -19,51 +18,28 @@ import (
 
 // Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
 
-// API contains the client connection. Use NewAPI() to get a new instance, and API.Close() to close
+// API contains the client connection. Use Dial() to get a new instance, and API.Close() to close
 // the connection and release resources.
 type API struct {
-	conn         *telnet.Conn
-	messageMutex sync.Mutex
-	sendChan     chan<- string
-	msgChan      <-chan message
+	*net.TCPConn
+	mutex sync.Mutex
 }
 
-type message struct {
-	msg []byte
-	err error
-}
+// DefaultAddr is the default TCP address of the FAH client.
+var DefaultAddr = &net.TCPAddr{Port: 36330}
 
-// DefaultAddr is the default FAH telnet address.
-const DefaultAddr = ":36330"
-
-// NewAPI connects to your FAH client. DefaultAddr is the default client address.
-func NewAPI(addr string) (*API, error) {
-	conn, err := telnet.DialTo(addr)
+// Dial connects to your FAH client. DefaultAddr is the default client address.
+func Dial(addr *net.TCPAddr) (*API, error) {
+	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	msgChan := make(chan message)
-	sendChan := make(chan string)
-
-	go func() {
-		client := telnet.Client{
-			Caller: caller{sendChan: sendChan, msgChan: msgChan},
-		}
-		if err := client.Call(conn); err != nil {
-			log.Panicln(err)
-		}
-	}()
-
-	return &API{
-		conn:     conn,
-		sendChan: sendChan,
-		msgChan:  msgChan,
-	}, nil
-}
-
-func (a *API) Close() error {
-	return a.conn.Close()
+	_, err = readMessage(conn) // Discard welcome message
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &API{TCPConn: conn}, nil
 }
 
 // TODO implement all commands
@@ -79,12 +55,14 @@ func (a *API) Exec(command string) ([]byte, error) {
 		return nil, errors.New("command contains newline")
 	}
 
-	a.messageMutex.Lock()
-	defer a.messageMutex.Unlock()
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
-	a.sendChan <- command
-	msg := <-a.msgChan
-	return msg.msg, msg.err
+	if _, err := a.Write(append([]byte(command), '\n')); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return readMessage(a)
 }
 
 // ExecEval executes commands which do not return a trailing newline.
@@ -98,7 +76,7 @@ func (a *API) ExecEval(command string) ([]byte, error) {
 	return bytes.TrimSuffix(s, []byte("\\")), nil
 }
 
-// Help returns the FAH telnet API commands.
+// Help returns a listing of the FAH API commands.
 func (a *API) Help() (string, error) {
 	s, err := a.Exec("help")
 	return string(s), err
@@ -428,30 +406,10 @@ func (a *API) WaitForUnits() error {
 	return err
 }
 
-type caller struct {
-	sendChan <-chan string
-	msgChan  chan<- message
-}
-
-func (c caller) CallTELNET(_ telnet.Context, w telnet.Writer, r telnet.Reader) {
-	_, _ = readMessage(r) // Discard welcome message
-	for {
-		b := bytes.NewBufferString(<-c.sendChan)
-		b.WriteString("\r\n")
-		_, err := b.WriteTo(w)
-		if err != nil { // If an error happens, it's usually a connection error
-			c.msgChan <- message{err: errors.WithStack(err)}
-		} else {
-			msg, err := readMessage(r)
-			c.msgChan <- message{msg: msg, err: err}
-		}
-	}
-}
-
-func readMessage(r telnet.Reader) ([]byte, error) {
+func readMessage(r io.Reader) ([]byte, error) {
 	buffer := bytes.Buffer{}
 	for {
-		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
+		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely // TODO benchmark
 		n, err := r.Read(b[:])
 		if err != nil {
 			if err == io.EOF {

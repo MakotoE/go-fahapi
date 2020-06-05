@@ -8,7 +8,7 @@ package main
 import "github.com/MakotoE/go-fahapi"
 
 func main() {
-	api, err := fahapi.NewAPI(fahapi.DefaultAddr)
+	api, err := fahapi.Dial(fahapi.DefaultAddr)
 	if err != nil {
 		panic(err)
 	}
