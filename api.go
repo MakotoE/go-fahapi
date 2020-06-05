@@ -29,7 +29,7 @@ type API struct {
 }
 
 type message struct {
-	msg string
+	msg []byte
 	err error
 }
 
@@ -69,14 +69,14 @@ func (a *API) Close() error {
 // TODO implement all commands
 
 // Exec executes a command on the FAH client.
-func (a *API) Exec(command string) (string, error) {
+func (a *API) Exec(command string) ([]byte, error) {
 	if command == "" {
 		// FAH doesn't respond to an empty command
-		return "", nil
+		return nil, nil
 	}
 
 	if strings.ContainsRune(command, '\n') {
-		return "", errors.New("command contains newline")
+		return nil, errors.New("command contains newline")
 	}
 
 	a.messageMutex.Lock()
@@ -88,19 +88,20 @@ func (a *API) Exec(command string) (string, error) {
 }
 
 // ExecEval executes commands which do not return a trailing newline.
-func (a *API) ExecEval(command string) (string, error) {
+func (a *API) ExecEval(command string) ([]byte, error) {
 	s, err := a.Exec(fmt.Sprintf(`eval "$(%s)\n"`, command))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// When using eval with a newline, the response contains an extra trailing backslash.
-	return strings.TrimSuffix(s, `\`), nil
+	return bytes.TrimSuffix(s, []byte("\\")), nil
 }
 
 // Help returns the FAH telnet API commands.
 func (a *API) Help() (string, error) {
-	return a.Exec("help")
+	s, err := a.Exec("help")
+	return string(s), err
 }
 
 type LogUpdatesArg string
@@ -132,37 +133,36 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 
 	// The string contains a bunch of \x00 sequences that are not valid JSON and cannot be
 	// unmarshalled using unmarshalPyON().
-	trimmed := s[strings.IndexByte(s, '\n')+1 : len(s)-len("\n---\n\n")]
+	trimmed := s[bytes.IndexByte(s, '\n')+1 : len(s)-len("\n---\n\n")]
 	return parsePyONString(trimmed)
 }
 
 var matchEscaped = regexp.MustCompile(`\\x..|\\n|\\r|\\"|\\\\`)
 
-func parsePyONString(s string) (string, error) {
-	if len(s) < 2 || s[0] != '"' || s[len(s)-1] != '"' {
-		return "", errors.New("s is not a valid PyON string")
+func parsePyONString(b []byte) (string, error) {
+	if len(b) < 2 || b[0] != '"' || b[len(b)-1] != '"' {
+		return "", errors.New("b is not a valid PyON string")
 	}
 
-	replaceFunc := func(s string) string {
-		switch s {
-		case `\n`:
-			return "\n"
-		case `\r`:
-			return "\r"
-		case `\"`:
-			return `"`
-		case `\\`:
-			return `\`
+	replaceFunc := func(b []byte) []byte {
+		if bytes.Equal(b, []byte(`\n`)) {
+			return []byte("\n")
+		} else if bytes.Equal(b, []byte(`\r`)) {
+			return []byte("\r")
+		} else if bytes.Equal(b, []byte(`\"`)) {
+			return []byte(`"`)
+		} else if bytes.Equal(b, []byte(`\\`)) {
+			return []byte(`\`)
 		}
 
-		n, err := strconv.ParseInt(s[2:], 16, 32)
+		n, err := strconv.ParseInt(string(b[2:]), 16, 32)
 		if err != nil {
-			return s
+			return b
 		}
 
-		return string(rune(n))
+		return []byte(string(rune(n)))
 	}
-	return matchEscaped.ReplaceAllStringFunc(s[1:len(s)-1], replaceFunc), nil
+	return string(matchEscaped.ReplaceAllFunc(b[1:len(b)-1], replaceFunc)), nil
 }
 
 // Screensaver unpauses all slots which are paused waiting for a screensaver and pause them again on
@@ -419,7 +419,7 @@ func (a *API) Uptime() (FAHDuration, error) {
 		return 0, err
 	}
 
-	return parseFAHDuration(s)
+	return parseFAHDuration(string(s))
 }
 
 // WaitForUnits blocks until all slots are paused.
@@ -448,45 +448,51 @@ func (c caller) CallTELNET(_ telnet.Context, w telnet.Writer, r telnet.Reader) {
 	}
 }
 
-func readMessage(r telnet.Reader) (string, error) {
-	buffer := strings.Builder{}
+func readMessage(r telnet.Reader) ([]byte, error) {
+	buffer := bytes.Buffer{}
 	for {
 		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
 		n, err := r.Read(b[:])
 		if err != nil {
 			if err == io.EOF {
-				return "", nil
+				return nil, nil
 			}
-			return "", errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 		if n <= 0 {
 			continue
 		}
 
-		buffer.WriteByte(b[0])
+		_ = buffer.WriteByte(b[0])
 
 		const endOfMessage = "\n> "
-		if strings.HasSuffix(buffer.String(), endOfMessage) {
-			return strings.TrimPrefix(strings.TrimSuffix(buffer.String(), endOfMessage), "\n"), nil
+		eomIndex := bytes.Index(buffer.Bytes(), []byte(endOfMessage))
+		if eomIndex >= 0 {
+			return bytes.TrimPrefix(buffer.Bytes()[:eomIndex], []byte("\n")), nil
 		}
 	}
 }
 
-var unmarshalPyONReplacer = strings.NewReplacer(
-	"None", `""`,
-	"False", "false",
-	"True", "true",
-)
-
-func unmarshalPyON(s string, dst interface{}) error {
+func unmarshalPyON(b []byte, dst interface{}) error {
 	// https://pypi.org/project/pon/
-	if !strings.HasPrefix(s, "PyON") || !strings.HasSuffix(s, "\n---") {
-		return errors.Errorf("invalid PyON format: %s", s)
+	if !bytes.HasPrefix(b, []byte("PyON")) || !bytes.HasSuffix(b, []byte("\n---")) {
+		return errors.Errorf("invalid PyON format: %s", b)
 	}
 
-	trimmed := s[strings.IndexByte(s, '\n')+1 : len(s)-len("\n---")]
+	trimmed := b[bytes.IndexByte(b, '\n')+1 : len(b)-len("\n---")]
 
-	replaced := unmarshalPyONReplacer.Replace(trimmed)
-
-	return errors.WithStack(json.Unmarshal([]byte(replaced), dst))
+	replaced := bytes.ReplaceAll(
+		bytes.ReplaceAll(
+			bytes.ReplaceAll(
+				trimmed,
+				[]byte("None"),
+				[]byte(`""`),
+			),
+			[]byte("False"),
+			[]byte("false"),
+		),
+		[]byte("True"),
+		[]byte("true"),
+	)
+	return errors.WithStack(json.Unmarshal(replaced, dst))
 }
