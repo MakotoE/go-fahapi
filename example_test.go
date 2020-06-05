@@ -1,7 +1,7 @@
 package fahapi
 
 func Example() {
-	api, err := NewAPI(DefaultAddr)
+	api, err := Dial(DefaultAddr)
 	if err != nil {
 		panic(err)
 	}

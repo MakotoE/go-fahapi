@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/MakotoE/checkerror"
-	"github.com/reiver/go-telnet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"log"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var doAllTests bool
@@ -41,8 +42,11 @@ func TestAPITestSuite(t *testing.T) {
 }
 
 func (a *APITestSuite) SetupSuite() {
-	api, err := NewAPI(DefaultAddr)
+	api, err := Dial(DefaultAddr)
 	require.Nil(a.T(), err)
+	if err := api.SetDeadline(time.Now().Add(time.Second * 5)); err != nil {
+		log.Println(err)
+	}
 	a.api = api
 }
 
@@ -90,7 +94,7 @@ func TestAPI_LogUpdates(t *testing.T) {
 		return
 	}
 
-	api, err := NewAPI(DefaultAddr)
+	api, err := Dial(DefaultAddr)
 	require.Nil(t, err)
 
 	log, err := api.LogUpdates(LogUpdatesStart)
@@ -268,27 +272,27 @@ func (a *APITestSuite) TestUptime() {
 
 func TestReadMessage(t *testing.T) {
 	tests := []struct {
-		r        telnet.Reader
+		s        string
 		expected []byte
 	}{
 		{
-			strings.NewReader(""),
+			"",
 			nil,
 		},
 		{
-			strings.NewReader("\n> "),
+			"\n> ",
 			[]byte(""),
 		},
 		{
-			strings.NewReader("a\n> \n> "),
+			"a\n> \n> ",
 			[]byte("a"),
 		},
 	}
 
 	for i, test := range tests {
-		result, err := readMessage(test.r)
+		result, err := readMessage(strings.NewReader(test.s))
 		require.Nil(t, err)
-		assert.Equal(t, []byte(test.expected), result, i)
+		assert.Equal(t, test.expected, result, i)
 	}
 }
 
