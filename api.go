@@ -16,13 +16,15 @@ import (
 	"time"
 )
 
-// Official FAH API documentation: https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
+// Official FAH API documentation
+// https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
 
 // API contains the client connection. Use Dial() to get a new instance, and API.Close() to close
 // the connection and release resources.
 type API struct {
 	*net.TCPConn
-	mutex sync.Mutex
+	buffer *bytes.Buffer
+	mutex  sync.Mutex
 }
 
 // DefaultAddr is the default TCP address of the FAH client.
@@ -35,16 +37,16 @@ func Dial(addr *net.TCPAddr) (*API, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = readMessage(conn) // Discard welcome message
-	if err != nil {
+	buffer := &bytes.Buffer{}
+	if err = readMessage(conn, buffer); err != nil { // Discard welcome message
 		return nil, errors.WithStack(err)
 	}
-	return &API{TCPConn: conn}, nil
+	return &API{TCPConn: conn, buffer: buffer}, nil
 }
 
 // TODO implement all commands
 
-// Exec executes a command on the FAH client.
+// Exec executes a command on the FAH client. The returned data is valid until the next Exec() call.
 func (a *API) Exec(command string) ([]byte, error) {
 	if command == "" {
 		// FAH doesn't respond to an empty command
@@ -62,7 +64,10 @@ func (a *API) Exec(command string) ([]byte, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	return readMessage(a)
+	if err := readMessage(a, a.buffer); err != nil {
+		return nil, err
+	}
+	return a.buffer.Bytes(), nil
 }
 
 // ExecEval executes commands which do not return a trailing newline.
@@ -104,14 +109,14 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 		return "", err
 	}
 
-	s, err := a.ExecEval("eval")
+	b, err := a.ExecEval("eval")
 	if err != nil {
 		return "", nil
 	}
 
 	// The string contains a bunch of \x00 sequences that are not valid JSON and cannot be
 	// unmarshalled using unmarshalPyON().
-	trimmed := s[bytes.IndexByte(s, '\n')+1 : len(s)-len("\n---\n\n")]
+	trimmed := b[bytes.IndexByte(b, '\n')+1 : len(b)-len("\n---\n\n")]
 	return parsePyONString(trimmed)
 }
 
@@ -196,24 +201,24 @@ func (a *API) FinishAll() error {
 
 // Info returns FAH build and machine info.
 func (a *API) Info() ([][]interface{}, error) {
-	s, err := a.Exec("info")
+	b, err := a.Exec("info")
 	if err != nil {
 		return nil, err
 	}
 
 	var result [][]interface{}
-	return result, unmarshalPyON(s, &result)
+	return result, unmarshalPyON(b, &result)
 }
 
 // NumSlots returns the number of slots.
 func (a *API) NumSlots() (int, error) {
-	s, err := a.Exec("num-slots")
+	b, err := a.Exec("num-slots")
 	if err != nil {
 		return 0, err
 	}
 
 	n := 0
-	return n, unmarshalPyON(s, &n)
+	return n, unmarshalPyON(b, &n)
 }
 
 // OnIdle sets a slot to run only when idle.
@@ -230,13 +235,13 @@ func (a *API) OnIdleAll() error {
 
 // OptionsGet gets the FAH client options.
 func (a *API) OptionsGet(dst *Options) error {
-	s, err := a.Exec("options -a")
+	b, err := a.Exec("options -a")
 	if err != nil {
 		return err
 	}
 
 	m := make(map[string]string)
-	if err := unmarshalPyON(s, &m); err != nil {
+	if err := unmarshalPyON(b, &m); err != nil {
 		return err
 	}
 
@@ -270,23 +275,23 @@ func (a *API) PauseSlot(slot int) error {
 
 // PPD returns the total estimated points per day for all slots.
 func (a *API) PPD() (float64, error) {
-	s, err := a.Exec("ppd")
+	b, err := a.Exec("ppd")
 	if err != nil {
 		return 0, err
 	}
 	result := 0.0
-	return result, unmarshalPyON(s, &result)
+	return result, unmarshalPyON(b, &result)
 }
 
 // QueueInfo returns info about the current work unit.
 func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
-	s, err := a.Exec("queue-info")
+	b, err := a.Exec("queue-info")
 	if err != nil {
 		return nil, err
 	}
 
 	var raw []slotQueueInfoRaw
-	if err := unmarshalPyON(s, &raw); err != nil {
+	if err := unmarshalPyON(b, &raw); err != nil {
 		return nil, err
 	}
 
@@ -340,12 +345,12 @@ type SimulationInfo struct {
 
 // SimulationInfo returns the simulation information for a slot.
 func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
-	s, err := a.Exec(fmt.Sprintf("simulation-info %d", slot))
+	b, err := a.Exec(fmt.Sprintf("simulation-info %d", slot))
 	if err != nil {
 		return err
 	}
 
-	if err := unmarshalPyON(s, dst); err != nil {
+	if err := unmarshalPyON(b, dst); err != nil {
 		return err
 	}
 
@@ -369,13 +374,13 @@ type SlotInfo struct {
 
 // SlotInfo returns information about each slot.
 func (a *API) SlotInfo() ([]SlotInfo, error) {
-	s, err := a.Exec("slot-info")
+	b, err := a.Exec("slot-info")
 	if err != nil {
 		return nil, err
 	}
 
 	var result []SlotInfo
-	return result, unmarshalPyON(s, &result)
+	return result, unmarshalPyON(b, &result)
 }
 
 // UnpauseAll unpauses all slots.
@@ -392,12 +397,12 @@ func (a *API) UnpauseSlot(slot int) error {
 
 // Uptime returns FAH uptime.
 func (a *API) Uptime() (FAHDuration, error) {
-	s, err := a.ExecEval("uptime")
+	b, err := a.ExecEval("uptime")
 	if err != nil {
 		return 0, err
 	}
 
-	return parseFAHDuration(string(s))
+	return parseFAHDuration(string(b))
 }
 
 // WaitForUnits blocks until all slots are paused.
@@ -406,16 +411,13 @@ func (a *API) WaitForUnits() error {
 	return err
 }
 
-func readMessage(r io.Reader) ([]byte, error) {
-	buffer := bytes.Buffer{}
+func readMessage(r io.Reader, buffer *bytes.Buffer) error {
+	buffer.Reset()
 	for {
-		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely // TODO benchmark
+		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
 		n, err := r.Read(b[:])
 		if err != nil {
-			if err == io.EOF {
-				return nil, nil
-			}
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 		if n <= 0 {
 			continue
@@ -426,7 +428,11 @@ func readMessage(r io.Reader) ([]byte, error) {
 		const endOfMessage = "\n> "
 		eomIndex := bytes.Index(buffer.Bytes(), []byte(endOfMessage))
 		if eomIndex >= 0 {
-			return bytes.TrimPrefix(buffer.Bytes()[:eomIndex], []byte("\n")), nil
+			buffer.Truncate(eomIndex)
+			if buffer.Len() > 0 && buffer.Bytes()[0] == '\n' {
+				buffer.Next(1)
+			}
+			return nil
 		}
 	}
 }
