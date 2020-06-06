@@ -95,9 +95,9 @@ func readMessage(r io.Reader, buffer *bytes.Buffer) error {
 		_ = buffer.WriteByte(b[0])
 
 		const endOfMessage = "\n> "
-		eomIndex := bytes.LastIndex(buffer.Bytes(), []byte(endOfMessage))
-		if eomIndex >= 0 {
-			buffer.Truncate(eomIndex)
+		if buffer.Len() >= len(endOfMessage) &&
+			bytes.Equal(buffer.Bytes()[buffer.Len()-len(endOfMessage):], []byte(endOfMessage)) {
+			buffer.Truncate(buffer.Len() - len(endOfMessage))
 			if buffer.Len() > 0 && buffer.Bytes()[0] == '\n' {
 				buffer.Next(1)
 			}
