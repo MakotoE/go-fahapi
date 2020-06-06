@@ -62,6 +62,7 @@ func (a *API) Exec(command string) ([]byte, error) {
 func exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 	if command == "" {
 		// FAH doesn't respond to an empty command
+		buffer.Reset()
 		return nil
 	}
 
@@ -92,6 +93,12 @@ func (a *API) ExecEval(command string) ([]byte, error) {
 }
 
 func execEval(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
+	if command == "" {
+		// FAH doesn't respond to an empty command
+		buffer.Reset()
+		return nil
+	}
+
 	if err := exec(conn, fmt.Sprintf(`eval "$(%s)\n"`, command), buffer); err != nil {
 		return err
 	}
