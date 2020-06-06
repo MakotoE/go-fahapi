@@ -74,7 +74,11 @@ func (a *APITestSuite) TestExec() {
 
 func (a *APITestSuite) TestExecEval() {
 	buffer := &bytes.Buffer{}
+	assert.Nil(a.T(), execEval(a.api.TCPConn, "", buffer))
+	assert.Equal(a.T(), 0, buffer.Len())
+
 	assert.Nil(a.T(), execEval(a.api.TCPConn, "date", buffer))
+	assert.Greater(a.T(), buffer.Len(), 0)
 }
 
 func (a *APITestSuite) TestHelp() {
