@@ -46,45 +46,73 @@ func Dial(addr *net.TCPAddr) (*API, error) {
 
 // TODO implement all commands
 
-// Exec executes a command on the FAH client. The returned data is valid until the next Exec() call.
+// Exec executes a command on the FAH client. The returned data is shared with the underlying
+// buffer.
 func (a *API) Exec(command string) ([]byte, error) {
-	if command == "" {
-		// FAH doesn't respond to an empty command
-		return nil, nil
-	}
-
-	if strings.ContainsRune(command, '\n') {
-		return nil, errors.New("command contains newline")
-	}
-
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if _, err := a.Write(append([]byte(command), '\n')); err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if err := readMessage(a, a.buffer); err != nil {
+	if err := exec(a.TCPConn, command, a.buffer); err != nil {
 		return nil, err
 	}
 	return a.buffer.Bytes(), nil
 }
 
-// ExecEval executes commands which do not return a trailing newline.
+// exec sends command to the connection and writes the response to buffer.
+func exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
+	if command == "" {
+		// FAH doesn't respond to an empty command
+		return nil
+	}
+
+	if strings.ContainsRune(command, '\n') {
+		return errors.New("command contains newline")
+	}
+
+	if _, err := conn.Write(append([]byte(command), '\n')); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := readMessage(conn, buffer); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ExecEval executes commands which do not return a trailing newline. The returned data is shared
+// with the underlying buffer.
 func (a *API) ExecEval(command string) ([]byte, error) {
-	s, err := a.Exec(fmt.Sprintf(`eval "$(%s)\n"`, command))
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := execEval(a.TCPConn, command, a.buffer); err != nil {
 		return nil, err
+	}
+	return a.buffer.Bytes(), nil
+}
+
+func execEval(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
+	if err := exec(conn, fmt.Sprintf(`eval "$(%s)\n"`, command), buffer); err != nil {
+		return err
 	}
 
 	// When using eval with a newline, the response contains an extra trailing backslash.
-	return bytes.TrimSuffix(s, []byte("\\")), nil
+	if buffer.Bytes()[buffer.Len()-1] == '\\' {
+		buffer.Truncate(buffer.Len() - 1)
+	}
+	return nil
 }
 
 // Help returns a listing of the FAH API commands.
 func (a *API) Help() (string, error) {
-	s, err := a.Exec("help")
-	return string(s), err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "help", a.buffer); err != nil {
+		return "", err
+	}
+
+	return a.buffer.String(), nil
 }
 
 type LogUpdatesArg string
@@ -95,7 +123,7 @@ const (
 	LogUpdatesStop    = LogUpdatesArg("stop")
 )
 
-// LogUpdates enables or disables log updates. Returns current log. Not goroutine safe.
+// LogUpdates enables or disables log updates. Returns current log.
 func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 	/*
 		This command is weird. It returns the log after the next prompt, like this:
@@ -104,19 +132,21 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 		>
 		PyON 1 log-update...
 	*/
-	_, err := a.Exec(fmt.Sprintf("log-updates %s", arg))
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, fmt.Sprintf("log-updates %s", arg), a.buffer); err != nil {
 		return "", err
 	}
 
-	b, err := a.ExecEval("eval")
-	if err != nil {
+	if err := execEval(a.TCPConn, "eval", a.buffer); err != nil {
 		return "", nil
 	}
 
 	// The string contains a bunch of \x00 sequences that are not valid JSON and cannot be
 	// unmarshalled using unmarshalPyON().
-	trimmed := b[bytes.IndexByte(b, '\n')+1 : len(b)-len("\n---\n\n")]
+	newlineIndex := bytes.IndexByte(a.buffer.Bytes(), '\n')
+	trimmed := a.buffer.Bytes()[newlineIndex+1 : a.buffer.Len()-len("\n---\n\n")]
 	return parsePyONString(trimmed)
 }
 
@@ -151,97 +181,121 @@ func parsePyONString(b []byte) (string, error) {
 // Screensaver unpauses all slots which are paused waiting for a screensaver and pause them again on
 // disconnect.
 func (a *API) Screensaver() error {
-	_, err := a.Exec("screensaver")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "screensaver", a.buffer)
 }
 
 // AlwaysOn sets a slot to be always on. (Not sure if this does anything at all.)
 func (a *API) AlwaysOn(slot int) error {
-	_, err := a.Exec(fmt.Sprintf("always_on %d", slot))
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, fmt.Sprintf("always_on %d", slot), a.buffer)
 }
 
 // Configured returns true if the client has set a user, team or passkey.
 func (a *API) Configured() (bool, error) {
-	s, err := a.Exec("configured")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "configured", a.buffer); err != nil {
 		return false, err
 	}
 
 	result := false
-	if err := unmarshalPyON(s, &result); err != nil {
+	if err := unmarshalPyON(a.buffer.Bytes(), &result); err != nil {
 		return false, err
 	}
-	return result, err
+	return result, nil
 }
 
 // DoCycle runs one client cycle.
 func (a *API) DoCycle() error {
-	_, err := a.Exec("do-cycle")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "do-cycle", a.buffer)
 }
 
 // DownloadCore downloads a core. NOT TESTED.
 func (a *API) DownloadCore(coreType string, url *url.URL) error {
-	_, err := a.Exec(fmt.Sprintf("download-core %s %s", coreType, url.String()))
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, fmt.Sprintf("download-core %s %s", coreType, url.String()), a.buffer)
 }
 
 // Finish pauses a slot when its current work unit is completed.
 func (a *API) Finish(slot int) error {
-	_, err := a.Exec(fmt.Sprintf("finish %d", slot))
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
 }
 
 // FinishAll pauses all slots individually when their current work unit is completed.
 func (a *API) FinishAll() error {
-	_, err := a.Exec("finish")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "finish", a.buffer)
 }
 
 // Info returns FAH build and machine info.
 func (a *API) Info() ([][]interface{}, error) {
-	b, err := a.Exec("info")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "info", a.buffer); err != nil {
 		return nil, err
 	}
 
 	var result [][]interface{}
-	return result, unmarshalPyON(b, &result)
+	return result, unmarshalPyON(a.buffer.Bytes(), &result)
 }
 
 // NumSlots returns the number of slots.
 func (a *API) NumSlots() (int, error) {
-	b, err := a.Exec("num-slots")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "num-slots", a.buffer); err != nil {
 		return 0, err
 	}
 
 	n := 0
-	return n, unmarshalPyON(b, &n)
+	return n, unmarshalPyON(a.buffer.Bytes(), &n)
 }
 
 // OnIdle sets a slot to run only when idle.
 func (a *API) OnIdle(slot int) error {
-	_, err := a.Exec(fmt.Sprintf("on_idle %d", slot))
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, fmt.Sprintf("on_idle %d", slot), a.buffer)
 }
 
 // OnIdle sets all slots to run only when idle.
 func (a *API) OnIdleAll() error {
-	_, err := a.Exec("on_idle")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "on_idle", a.buffer)
 }
 
 // OptionsGet gets the FAH client options.
 func (a *API) OptionsGet(dst *Options) error {
-	b, err := a.Exec("options -a")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "options -a", a.buffer); err != nil {
 		return err
 	}
 
 	m := make(map[string]string)
-	if err := unmarshalPyON(b, &m); err != nil {
+	if err := unmarshalPyON(a.buffer.Bytes(), &m); err != nil {
 		return err
 	}
 
@@ -250,48 +304,58 @@ func (a *API) OptionsGet(dst *Options) error {
 
 // OptionsSet sets an option.
 func (a *API) OptionsSet(key string, value interface{}) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	// Prevent injection attacks
 	valueString, valueIsString := value.(string)
 	if strings.ContainsAny(key, "= !") || valueIsString && strings.ContainsRune(valueString, ' ') {
 		return errors.New("key or value contains bad char")
 	}
 
-	_, err := a.Exec(fmt.Sprintf("options %s=%s", key, value))
-	return err
+	return exec(a.TCPConn, fmt.Sprintf("options %s=%s", key, value), a.buffer)
 }
 
 // PauseAll pauses all slots.
 func (a *API) PauseAll() error {
-	_, err := a.Exec("pause")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "pause", a.buffer)
 }
 
 // PauseSlot pauses a slot.
 func (a *API) PauseSlot(slot int) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	// Unfortunately the command doesn't tell you if it succeeded or not
-	_, err := a.Exec(fmt.Sprintf("pause %d", slot))
-	return err
+	return exec(a.TCPConn, fmt.Sprintf("pause %d", slot), a.buffer)
 }
 
 // PPD returns the total estimated points per day for all slots.
 func (a *API) PPD() (float64, error) {
-	b, err := a.Exec("ppd")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "ppd", a.buffer); err != nil {
 		return 0, err
 	}
 	result := 0.0
-	return result, unmarshalPyON(b, &result)
+	return result, unmarshalPyON(a.buffer.Bytes(), &result)
 }
 
 // QueueInfo returns info about the current work unit.
 func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
-	b, err := a.Exec("queue-info")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "queue-info", a.buffer); err != nil {
 		return nil, err
 	}
 
 	var raw []slotQueueInfoRaw
-	if err := unmarshalPyON(b, &raw); err != nil {
+	if err := unmarshalPyON(a.buffer.Bytes(), &raw); err != nil {
 		return nil, err
 	}
 
@@ -306,19 +370,26 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 
 // RequestID requests an ID from the assignment server.
 func (a *API) RequestID() error {
-	_, err := a.Exec("request-id")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "request-id", a.buffer)
 }
 
+// RequestWS requests work server assignment from the assignment server.
 func (a *API) RequestWS() error {
-	_, err := a.Exec("request-ws")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "request-ws", a.buffer)
 }
 
 // Shutdown ends all FAH processes.
 func (a *API) Shutdown() error {
-	_, err := a.Exec("shutdown")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "shutdown", a.buffer)
 }
 
 type SimulationInfo struct {
@@ -345,12 +416,14 @@ type SimulationInfo struct {
 
 // SimulationInfo returns the simulation information for a slot.
 func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
-	b, err := a.Exec(fmt.Sprintf("simulation-info %d", slot))
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, fmt.Sprintf("simulation-info %d", slot), a.buffer); err != nil {
 		return err
 	}
 
-	if err := unmarshalPyON(b, dst); err != nil {
+	if err := unmarshalPyON(a.buffer.Bytes(), dst); err != nil {
 		return err
 	}
 
@@ -374,41 +447,51 @@ type SlotInfo struct {
 
 // SlotInfo returns information about each slot.
 func (a *API) SlotInfo() ([]SlotInfo, error) {
-	b, err := a.Exec("slot-info")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := exec(a.TCPConn, "slot-info", a.buffer); err != nil {
 		return nil, err
 	}
 
 	var result []SlotInfo
-	return result, unmarshalPyON(b, &result)
+	return result, unmarshalPyON(a.buffer.Bytes(), &result)
 }
 
 // UnpauseAll unpauses all slots.
 func (a *API) UnpauseAll() error {
-	_, err := a.Exec("unpause")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "unpause", a.buffer)
 }
 
 // UnpauseSlot unpauses a slot.
 func (a *API) UnpauseSlot(slot int) error {
-	_, err := a.Exec(fmt.Sprintf("unpause %d", slot))
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, fmt.Sprintf("unpause %d", slot), a.buffer)
 }
 
 // Uptime returns FAH uptime.
 func (a *API) Uptime() (FAHDuration, error) {
-	b, err := a.ExecEval("uptime")
-	if err != nil {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := execEval(a.TCPConn, "uptime", a.buffer); err != nil {
 		return 0, err
 	}
 
-	return parseFAHDuration(string(b))
+	return parseFAHDuration(a.buffer.String())
 }
 
 // WaitForUnits blocks until all slots are paused.
 func (a *API) WaitForUnits() error {
-	_, err := a.Exec("wait-for-units")
-	return err
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return exec(a.TCPConn, "wait-for-units", a.buffer)
 }
 
 func readMessage(r io.Reader, buffer *bytes.Buffer) error {
