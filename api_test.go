@@ -325,7 +325,7 @@ func TestReadMessage(t *testing.T) {
 }
 
 func BenchmarkReadMessage(b *testing.B) {
-	// BenchmarkReadMessage-8   	 4178904	       289 ns/op
+	// BenchmarkReadMessage-8   	 4450298	       268 ns/op
 	buffer := &bytes.Buffer{}
 	var result []byte
 	r := &bytes.Buffer{}
