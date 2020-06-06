@@ -80,6 +80,32 @@ func exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 	return nil
 }
 
+func readMessage(r io.Reader, buffer *bytes.Buffer) error {
+	buffer.Reset()
+	for {
+		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
+		n, err := r.Read(b[:])
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if n <= 0 {
+			continue
+		}
+
+		_ = buffer.WriteByte(b[0])
+
+		const endOfMessage = "\n> "
+		eomIndex := bytes.LastIndex(buffer.Bytes(), []byte(endOfMessage))
+		if eomIndex >= 0 {
+			buffer.Truncate(eomIndex)
+			if buffer.Len() > 0 && buffer.Bytes()[0] == '\n' {
+				buffer.Next(1)
+			}
+			return nil
+		}
+	}
+}
+
 // ExecEval executes commands which do not return a trailing newline. The returned data is shared
 // with the underlying buffer.
 func (a *API) ExecEval(command string) ([]byte, error) {
@@ -499,32 +525,6 @@ func (a *API) WaitForUnits() error {
 	defer a.mutex.Unlock()
 
 	return exec(a.TCPConn, "wait-for-units", a.buffer)
-}
-
-func readMessage(r io.Reader, buffer *bytes.Buffer) error {
-	buffer.Reset()
-	for {
-		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
-		n, err := r.Read(b[:])
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		if n <= 0 {
-			continue
-		}
-
-		_ = buffer.WriteByte(b[0])
-
-		const endOfMessage = "\n> "
-		eomIndex := bytes.Index(buffer.Bytes(), []byte(endOfMessage))
-		if eomIndex >= 0 {
-			buffer.Truncate(eomIndex)
-			if buffer.Len() > 0 && buffer.Bytes()[0] == '\n' {
-				buffer.Next(1)
-			}
-			return nil
-		}
-	}
 }
 
 func unmarshalPyON(b []byte, dst interface{}) error {
