@@ -1,12 +1,15 @@
 package fahapi
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/MakotoE/checkerror"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -272,28 +275,68 @@ func (a *APITestSuite) TestUptime() {
 
 func TestReadMessage(t *testing.T) {
 	tests := []struct {
-		s        string
-		expected []byte
+		s             string
+		expected      string
+		expectedError error
 	}{
 		{
+			"",
+			"",
+			io.EOF,
+		},
+		{
+			"\n> ",
 			"",
 			nil,
 		},
 		{
-			"\n> ",
-			[]byte(""),
+			"a",
+			"a",
+			io.EOF,
+		},
+		{
+			"a\n> ",
+			"a",
+			nil,
 		},
 		{
 			"a\n> \n> ",
-			[]byte("a"),
+			"a",
+			nil,
+		},
+		{
+			"\na\n> ",
+			"a",
+			nil,
+		},
+		{
+			"\na",
+			"\na",
+			io.EOF,
 		},
 	}
 
+	buffer := &bytes.Buffer{}
 	for i, test := range tests {
-		result, err := readMessage(strings.NewReader(test.s))
-		require.Nil(t, err)
-		assert.Equal(t, test.expected, result, i)
+		err := readMessage(strings.NewReader(test.s), buffer)
+		assert.Equal(t, test.expectedError, errors.Cause(err), i)
+		assert.Equal(t, test.expected, buffer.String(), i)
 	}
+}
+
+func BenchmarkReadMessage(b *testing.B) {
+	// BenchmarkReadMessage-8   	 4178904	       289 ns/op
+	buffer := &bytes.Buffer{}
+	var result []byte
+	r := &bytes.Buffer{}
+	for i := 0; i < b.N; i++ {
+		r.WriteString("message\n> ")
+		if err := readMessage(r, buffer); err != nil {
+			panic(err)
+		}
+		result = buffer.Bytes()
+	}
+	_ = result
 }
 
 func TestUnmarshalPyON(t *testing.T) {
