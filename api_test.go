@@ -59,26 +59,22 @@ func (a *APITestSuite) TearDownSuite() {
 
 func (a *APITestSuite) TestAPI() {
 	// For trying new commands
-	s, err := a.api.Exec("")
+	b, err := a.api.Exec("")
 	assert.Nil(a.T(), err)
-	fmt.Println(s)
+	fmt.Print(b)
 }
 
 func (a *APITestSuite) TestExec() {
-	{
-		result, err := a.api.Exec("")
-		assert.Equal(a.T(), []byte(nil), result)
-		assert.Nil(a.T(), err)
-	}
-	{
-		_, err := a.api.Exec("\n")
-		assert.NotNil(a.T(), err)
-	}
+	buffer := &bytes.Buffer{}
+	assert.Equal(a.T(), 0, buffer.Len())
+
+	assert.NotNil(a.T(), exec(a.api.TCPConn, "\n", buffer))
+	assert.Equal(a.T(), 0, buffer.Len())
 }
 
 func (a *APITestSuite) TestExecEval() {
-	_, err := a.api.ExecEval("date")
-	assert.Nil(a.T(), err)
+	buffer := &bytes.Buffer{}
+	assert.Nil(a.T(), execEval(a.api.TCPConn, "date", buffer))
 }
 
 func (a *APITestSuite) TestHelp() {
