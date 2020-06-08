@@ -68,16 +68,16 @@ func (a *APITestSuite) TestExec() {
 	buffer := &bytes.Buffer{}
 	assert.Equal(a.T(), 0, buffer.Len())
 
-	assert.NotNil(a.T(), exec(a.api.TCPConn, "\n", buffer))
+	assert.NotNil(a.T(), Exec(a.api.TCPConn, "\n", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 }
 
 func (a *APITestSuite) TestExecEval() {
 	buffer := &bytes.Buffer{}
-	assert.Nil(a.T(), execEval(a.api.TCPConn, "", buffer))
+	assert.Nil(a.T(), ExecEval(a.api.TCPConn, "", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 
-	assert.Nil(a.T(), execEval(a.api.TCPConn, "date", buffer))
+	assert.Nil(a.T(), ExecEval(a.api.TCPConn, "date", buffer))
 	assert.Greater(a.T(), buffer.Len(), 0)
 }
 
@@ -134,7 +134,7 @@ func TestParsePyONString(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		result, err := parsePyONString([]byte(test.s))
+		result, err := ParsePyONString([]byte(test.s))
 		assert.Equal(t, test.expected, result, i)
 		checkerror.Check(t, test.expectError, err, i)
 	}
@@ -144,7 +144,7 @@ func BenchmarkParsePyONString(b *testing.B) {
 	// BenchmarkParsePyONString-8   	 1555113	       762 ns/op
 	var result string
 	for i := 0; i < b.N; i++ {
-		result, _ = parsePyONString([]byte("a\x01\\n"))
+		result, _ = ParsePyONString([]byte("a\x01\\n"))
 	}
 	_ = result
 }
@@ -369,7 +369,7 @@ func TestUnmarshalPyON(t *testing.T) {
 
 	for i, test := range tests {
 		var dst interface{}
-		checkerror.Check(t, test.expectError, unmarshalPyON([]byte(test.s), &dst), i)
+		checkerror.Check(t, test.expectError, UnmarshalPyON([]byte(test.s), &dst), i)
 		assert.Equal(t, test.expected, dst, i)
 	}
 }
@@ -378,7 +378,7 @@ func BenchmarkUnparshalPyOn(b *testing.B) {
 	// BenchmarkUnparshalPyOn-8   	 3064592	       406 ns/op
 	var result struct{}
 	for i := 0; i < b.N; i++ {
-		_ = unmarshalPyON([]byte("PyON\n{}\n---"), &result)
+		_ = UnmarshalPyON([]byte("PyON\n{}\n---"), &result)
 	}
 	_ = result
 }

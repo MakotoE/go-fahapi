@@ -450,7 +450,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	s.Core = r.Core
 	s.Unit = r.Unit
 	s.PercentDone = r.PercentDone
-	s.ETA, err = parseFAHDuration(r.ETA)
+	s.ETA, err = ParseFAHDuration(r.ETA)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -463,25 +463,25 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 		return errors.WithStack(err)
 	}
 	s.WaitingOn = r.WaitingOn
-	s.NextAttempt, err = parseFAHDuration(r.NextAttempt)
+	s.NextAttempt, err = ParseFAHDuration(r.NextAttempt)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	s.TimeRemaining, err = parseFAHDuration(r.TimeRemaining)
+	s.TimeRemaining, err = ParseFAHDuration(r.TimeRemaining)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	s.TotalFrames = r.TotalFrames
 	s.FramesDone = r.FramesDone
-	s.Assigned, err = parseFAHTime(r.Assigned)
+	s.Assigned, err = ParseFAHTime(r.Assigned)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	s.Timeout, err = parseFAHTime(r.Timeout)
+	s.Timeout, err = ParseFAHTime(r.Timeout)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	s.Deadline, err = parseFAHTime(r.Deadline)
+	s.Deadline, err = ParseFAHTime(r.Deadline)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -489,7 +489,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	s.CS = r.CS
 	s.Attempts = r.Attempts
 	s.Slot = r.Slot
-	s.TPF, err = parseFAHDuration(r.TPF)
+	s.TPF, err = ParseFAHDuration(r.TPF)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -500,7 +500,7 @@ func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
 	return errors.WithStack(err)
 }
 
-func parseFAHTime(s string) (time.Time, error) {
+func ParseFAHTime(s string) (time.Time, error) {
 	if s == "<invalid>" {
 		return time.Time{}, nil
 	}
@@ -526,7 +526,7 @@ const unknowntime = FAHDuration(-1)
 
 const unknowntimeStr = "unknowntime"
 
-func parseFAHDuration(s string) (FAHDuration, error) {
+func ParseFAHDuration(s string) (FAHDuration, error) {
 	shortened := parseFAHDurationReplacer.Replace(s)
 	if shortened == unknowntimeStr {
 		return unknowntime, nil

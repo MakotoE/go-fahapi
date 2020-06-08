@@ -71,7 +71,7 @@ func TestParseFAHDuration(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		result, err := parseFAHDuration(test.s)
+		result, err := ParseFAHDuration(test.s)
 		assert.Equal(t, test.expected, result, i)
 		checkerror.Check(t, test.expectError, err, i)
 	}
