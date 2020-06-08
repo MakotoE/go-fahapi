@@ -13,7 +13,7 @@ func Fuzz_readMessage(data []byte) int {
 }
 
 func Fuzz_parseFAHDuration(data []byte) int {
-	if _, err := parseFAHDuration(string(data)); err != nil {
+	if _, err := ParseFAHDuration(string(data)); err != nil {
 		return 0
 	}
 	return 1
