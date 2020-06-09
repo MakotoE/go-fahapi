@@ -179,8 +179,18 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 
 	// The string contains a bunch of \x00 sequences that are not valid JSON and cannot be
 	// unmarshalled using UnmarshalPyON().
-	newlineIndex := bytes.IndexByte(a.buffer.Bytes(), '\n')
-	trimmed := a.buffer.Bytes()[newlineIndex+1 : a.buffer.Len()-len("\n---\n\n")]
+	return parseLog(a.buffer.Bytes())
+}
+
+func parseLog(b []byte) (string, error) {
+	// The log looks like this: PyON 1 log-update\n"..."\n---\n\n
+	const suffix = "\n---\n\n"
+	if len(b) < len(suffix) {
+		return "", errors.New("")
+	}
+
+	newlineIndex := bytes.IndexByte(b, '\n')
+	trimmed := b[newlineIndex+1 : len(b)-len(suffix)]
 	return ParsePyONString(trimmed)
 }
 

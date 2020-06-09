@@ -93,16 +93,51 @@ func TestAPI_LogUpdates(t *testing.T) {
 		t.Skip()
 	}
 
-	if !doAllTests {
-		return
-	}
+	//if !doAllTests {
+	//	return
+	//}
 
 	api, err := Dial(DefaultAddr)
 	require.Nil(t, err)
 
-	log, err := api.LogUpdates(LogUpdatesStart)
+	result, err := api.LogUpdates(LogUpdatesStart)
 	assert.Nil(t, err)
-	assert.NotEmpty(t, log)
+	assert.NotEmpty(t, result)
+}
+
+func TestParseLog(t *testing.T) {
+	tests := []struct {
+		s           string
+		expected    string
+		expectError bool
+	}{
+		{
+			"",
+			"",
+			true,
+		},
+		{
+			"PyON 1 log-update",
+			"",
+			true,
+		},
+		{
+			"PyON 1 log-update\n\n---\n\n",
+			"",
+			true,
+		},
+		{
+			"PyON 1 log-update\n\"a\"\n---\n\n",
+			"a",
+			false,
+		},
+	}
+
+	for i, test := range tests {
+		result, err := parseLog([]byte(test.s))
+		assert.Equal(t, test.expected, result, i)
+		checkerror.Check(t, test.expectError, err, i)
+	}
 }
 
 func TestParsePyONString(t *testing.T) {
