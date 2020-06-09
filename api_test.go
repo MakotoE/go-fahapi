@@ -122,6 +122,11 @@ func TestParseLog(t *testing.T) {
 			true,
 		},
 		{
+			"\n---\n\n",
+			"",
+			true,
+		},
+		{
 			"PyON 1 log-update\n\n---\n\n",
 			"",
 			true,

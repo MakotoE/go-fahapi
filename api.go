@@ -185,7 +185,7 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 func parseLog(b []byte) (string, error) {
 	// The log looks like this: PyON 1 log-update\n"..."\n---\n\n
 	const suffix = "\n---\n\n"
-	if len(b) < len(suffix) {
+	if len(b) < len("\n"+suffix) {
 		return "", errors.New("")
 	}
 
