@@ -47,7 +47,7 @@ func TestAPITestSuite(t *testing.T) {
 func (a *APITestSuite) SetupSuite() {
 	api, err := Dial(DefaultAddr)
 	require.Nil(a.T(), err)
-	if err := api.SetDeadline(time.Now().Add(time.Second * 5)); err != nil {
+	if err := api.SetDeadline(time.Now().Add(time.Second * 10)); err != nil {
 		log.Println(err)
 	}
 	a.api = api
