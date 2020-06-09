@@ -186,12 +186,12 @@ func parseLog(b []byte) (string, error) {
 	// The log looks like this: PyON 1 log-update\n"..."\n---\n\n
 	const suffix = "\n---\n\n"
 	if len(b) < len("\n"+suffix) {
-		return "", errors.New("")
+		return "", errors.New("b is not a log")
 	}
 
-	newlineIndex := bytes.IndexByte(b, '\n')
-	trimmed := b[newlineIndex+1 : len(b)-len(suffix)]
-	return ParsePyONString(trimmed)
+	removedPrefix := b[bytes.IndexByte(b, '\n')+1:]
+	removedSuffix := bytes.TrimSuffix(removedPrefix, []byte(suffix))
+	return ParsePyONString(removedSuffix)
 }
 
 var matchEscaped = regexp.MustCompile(`\\x..|\\n|\\r|\\"|\\\\`)

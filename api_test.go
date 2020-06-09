@@ -93,9 +93,9 @@ func TestAPI_LogUpdates(t *testing.T) {
 		t.Skip()
 	}
 
-	//if !doAllTests {
-	//	return
-	//}
+	if !doAllTests {
+		return
+	}
 
 	api, err := Dial(DefaultAddr)
 	require.Nil(t, err)
@@ -125,6 +125,11 @@ func TestParseLog(t *testing.T) {
 			"\n---\n\n",
 			"",
 			true,
+		},
+		{
+			"\n\"\"\n---\n\n",
+			"",
+			false,
 		},
 		{
 			"PyON 1 log-update\n\n---\n\n",
