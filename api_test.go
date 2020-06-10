@@ -66,6 +66,7 @@ func (a *APITestSuite) TestAPI() {
 
 func (a *APITestSuite) TestExec() {
 	buffer := &bytes.Buffer{}
+	assert.Nil(a.T(), Exec(a.api.TCPConn, "", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 
 	assert.NotNil(a.T(), Exec(a.api.TCPConn, "\n", buffer))
