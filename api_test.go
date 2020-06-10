@@ -122,6 +122,11 @@ func TestParseLog(t *testing.T) {
 			true,
 		},
 		{
+			`""`,
+			"",
+			false,
+		},
+		{
 			"\n---\n\n",
 			"",
 			true,
