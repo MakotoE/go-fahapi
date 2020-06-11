@@ -402,6 +402,11 @@ func TestUnmarshalPyON(t *testing.T) {
 			true,
 		},
 		{
+			"PyON\n---",
+			nil,
+			true,
+		},
+		{
 			"PyON\n\n---",
 			nil,
 			true,
