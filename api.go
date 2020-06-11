@@ -541,12 +541,16 @@ func UnmarshalPyON(b []byte, dst interface{}) error {
 		return errors.Errorf("invalid PyON format: %s", b)
 	}
 
-	trimmed := b[bytes.IndexByte(b, '\n')+1 : len(b)-len("\n---")]
+	start := bytes.IndexByte(b, '\n') + 1
+	end := len(b) - len("\n---")
+	if start > end {
+		start = end
+	}
 
 	replaced := bytes.ReplaceAll(
 		bytes.ReplaceAll(
 			bytes.ReplaceAll(
-				trimmed,
+				b[start:end],
 				[]byte("None"),
 				[]byte(`""`),
 			),
