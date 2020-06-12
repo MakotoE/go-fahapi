@@ -264,7 +264,8 @@ func (a *APITestSuite) TestOptionsSetGet() {
 	assert.NotNil(a.T(), a.api.OptionsSet("power=", ""))
 
 	oldOptions := &Options{}
-	assert.Nil(a.T(), a.api.OptionsGet(oldOptions))
+	require.Nil(a.T(), a.api.OptionsGet(oldOptions))
+	require.NotEmpty(a.T(), oldOptions.Log)
 
 	assert.Nil(a.T(), a.api.OptionsSet("power", "LIGHT"))
 

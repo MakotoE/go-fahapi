@@ -276,7 +276,7 @@ func (a *API) Finish(slot int) error {
 	return Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
 }
 
-// FinishAll pauses all slots individually when their current work unit is completed.
+// FinishAll pauses all slots one-by-one when their current work unit is completed.
 func (a *API) FinishAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
@@ -335,12 +335,7 @@ func (a *API) OptionsGet(dst *Options) error {
 		return err
 	}
 
-	m := make(map[string]string)
-	if err := UnmarshalPyON(a.buffer.Bytes(), &m); err != nil {
-		return err
-	}
-
-	return dst.fromMap(m)
+	return UnmarshalPyON(a.buffer.Bytes(), &dst)
 }
 
 // OptionsSet sets an option.
@@ -395,18 +390,12 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 		return nil, err
 	}
 
-	var raw []slotQueueInfoRaw
-	if err := UnmarshalPyON(a.buffer.Bytes(), &raw); err != nil {
+	var info []SlotQueueInfo
+	if err := UnmarshalPyON(a.buffer.Bytes(), &info); err != nil {
 		return nil, err
 	}
 
-	result := make([]SlotQueueInfo, len(raw))
-	for i, row := range raw {
-		if err := result[i].fromRaw(&row); err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
+	return info, nil
 }
 
 // RequestID requests an ID from the assignment server.

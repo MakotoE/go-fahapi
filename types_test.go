@@ -7,6 +7,22 @@ import (
 	"time"
 )
 
+func TestStringBool_UnmarshalJSON(t *testing.T) {
+	result := StringBool(false)
+	assert.NotNil(t, result.UnmarshalJSON(nil))
+
+	assert.Nil(t, result.UnmarshalJSON([]byte(`"true"`)))
+	assert.Equal(t, StringBool(true), result)
+}
+
+func TestStringInt_UnmarshalJSON(t *testing.T) {
+	result := StringInt(0)
+	assert.NotNil(t, result.UnmarshalJSON([]byte("1")))
+
+	assert.Nil(t, result.UnmarshalJSON([]byte(`"2"`)))
+	assert.Equal(t, StringInt(2), result)
+}
+
 func TestParseFAHDuration(t *testing.T) {
 	tests := []struct {
 		s           string
