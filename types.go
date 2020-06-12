@@ -215,41 +215,33 @@ func (p *Power) UnmarshalJSON(b []byte) error {
 }
 
 type SlotQueueInfo struct {
-	ID             string
-	State          string
-	Error          string
-	Project        int
-	Run            int
-	Clone          int
-	Gen            int
-	Core           string
-	Unit           string
-	PercentDone    string
-	ETA            FAHDuration
-	PPD            StringInt
-	CreditEstimate StringInt
-	WaitingOn      string
-	NextAttempt    FAHDuration
-	TimeRemaining  FAHDuration
-	TotalFrames    int
-	FramesDone     int
-	Assigned       time.Time
-	Timeout        time.Time
-	Deadline       time.Time
-	WS             string
-	CS             string
-	Attempts       int
-	Slot           string
-	TPF            FAHDuration
-	BaseCredit     StringInt
-}
-
-func ParseFAHTime(s string) (time.Time, error) {
-	if s == "<invalid>" {
-		return time.Time{}, nil
-	}
-
-	return time.Parse(time.RFC3339, s)
+	ID             string      `json:"id"`
+	State          string      `json:"state"`
+	Error          string      `json:"error"`
+	Project        int         `json:"project"`
+	Run            int         `json:"run"`
+	Clone          int         `json:"clone"`
+	Gen            int         `json:"gen"`
+	Core           string      `json:"core"`
+	Unit           string      `json:"unit"`
+	PercentDone    string      `json:"percentdone"`
+	ETA            FAHDuration `json:"eta"`
+	PPD            StringInt   `json:"ppd"`
+	CreditEstimate StringInt   `json:"creditestimate"`
+	WaitingOn      string      `json:"waitingon"`
+	NextAttempt    FAHDuration `json:"nextattempt"`
+	TimeRemaining  FAHDuration `json:"timeremaining"`
+	TotalFrames    int         `json:"totalframes"`
+	FramesDone     int         `json:"framesdone"`
+	Assigned       time.Time   `json:"assigned"`
+	Timeout        time.Time   `json:"timeout"`
+	Deadline       time.Time   `json:"deadline"`
+	WS             string      `json:"ws"`
+	CS             string      `json:"cs"`
+	Attempts       int         `json:"attempts"`
+	Slot           string      `json:"slot"`
+	TPF            FAHDuration `json:"tpf"`
+	BaseCredit     StringInt   `json:"basecredit"`
 }
 
 type FAHDuration time.Duration
@@ -328,4 +320,64 @@ func (f *FAHDuration) UnmarshalJSON(b []byte) error {
 
 	*f = duration
 	return nil
+}
+
+type SimulationInfo struct {
+	User            string  `json:"user"`
+	Team            string  `json:"team"`
+	Project         int     `json:"project"`
+	Run             int     `json:"run"`
+	Clone           int     `json:"clone"`
+	Gen             int     `json:"gen"`
+	CoreType        int     `json:"core_type"`
+	Core            string  `json:"core"`
+	TotalIterations int     `json:"total_iterations"`
+	IterationsDone  int     `json:"iterations_done"`
+	Energy          int     `json:"energy"`
+	Temperature     int     `json:"temperature"`
+	StartTime       FAHTime `json:"start_time"`
+	Timeout         int     `json:"timeout"`
+	Deadline        int     `json:"deadline"`
+	ETA             int     `json:"eta"`
+	Progress        float64 `json:"progress"`
+	Slot            int     `json:"slot"`
+}
+
+type FAHTime time.Time
+
+var _ json.Unmarshaler = (*FAHTime)(nil)
+
+func ParseFAHTime(s string) (FAHTime, error) {
+	if s == "<invalid>" {
+		return FAHTime{}, nil
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	return FAHTime(t), err
+}
+
+func (t *FAHTime) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	fahTime, err := ParseFAHTime(s)
+	if err != nil {
+		return &json.UnmarshalTypeError{
+			Value: string(b),
+			Type:  reflect.TypeOf(t),
+		}
+	}
+	*t = fahTime
+	return nil
+}
+
+type SlotInfo struct {
+	ID          string                 `json:"id"`
+	Status      string                 `json:"status"`
+	Description string                 `json:"description"`
+	Options     map[string]interface{} `json:"options"`
+	Reason      string                 `json:"reason"`
+	Idle        bool                   `json:"idle"`
 }
