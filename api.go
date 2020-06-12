@@ -276,7 +276,7 @@ func (a *API) Finish(slot int) error {
 	return Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
 }
 
-// FinishAll pauses all slots individually when their current work unit is completed.
+// FinishAll pauses all slots one-by-one when their current work unit is completed.
 func (a *API) FinishAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
@@ -335,12 +335,7 @@ func (a *API) OptionsGet(dst *Options) error {
 		return err
 	}
 
-	m := make(map[string]string)
-	if err := UnmarshalPyON(a.buffer.Bytes(), &m); err != nil {
-		return err
-	}
-
-	return dst.fromMap(m)
+	return UnmarshalPyON(a.buffer.Bytes(), &dst)
 }
 
 // OptionsSet sets an option.
