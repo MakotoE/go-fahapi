@@ -215,33 +215,33 @@ func (p *Power) UnmarshalJSON(b []byte) error {
 }
 
 type SlotQueueInfo struct {
-	ID             string
-	State          string
-	Error          string
-	Project        int
-	Run            int
-	Clone          int
-	Gen            int
-	Core           string
-	Unit           string
-	PercentDone    string
-	ETA            FAHDuration
-	PPD            StringInt
-	CreditEstimate StringInt
-	WaitingOn      string
-	NextAttempt    FAHDuration
-	TimeRemaining  FAHDuration
-	TotalFrames    int
-	FramesDone     int
-	Assigned       time.Time
-	Timeout        time.Time
-	Deadline       time.Time
-	WS             string
-	CS             string
-	Attempts       int
-	Slot           string
-	TPF            FAHDuration
-	BaseCredit     StringInt
+	ID             string      `json:"id"`
+	State          string      `json:"state"`
+	Error          string      `json:"error"`
+	Project        int         `json:"project"`
+	Run            int         `json:"run"`
+	Clone          int         `json:"clone"`
+	Gen            int         `json:"gen"`
+	Core           string      `json:"core"`
+	Unit           string      `json:"unit"`
+	PercentDone    string      `json:"percentdone"`
+	ETA            FAHDuration `json:"eta"`
+	PPD            StringInt   `json:"ppd"`
+	CreditEstimate StringInt   `json:"creditestimate"`
+	WaitingOn      string      `json:"waitingon"`
+	NextAttempt    FAHDuration `json:"nextattempt"`
+	TimeRemaining  FAHDuration `json:"timeremaining"`
+	TotalFrames    int         `json:"totalframes"`
+	FramesDone     int         `json:"framesdone"`
+	Assigned       time.Time   `json:"assigned"`
+	Timeout        time.Time   `json:"timeout"`
+	Deadline       time.Time   `json:"deadline"`
+	WS             string      `json:"ws"`
+	CS             string      `json:"cs"`
+	Attempts       int         `json:"attempts"`
+	Slot           string      `json:"slot"`
+	TPF            FAHDuration `json:"tpf"`
+	BaseCredit     StringInt   `json:"basecredit"`
 }
 
 func ParseFAHTime(s string) (time.Time, error) {
