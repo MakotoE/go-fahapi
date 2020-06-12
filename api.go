@@ -390,18 +390,12 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 		return nil, err
 	}
 
-	var raw []slotQueueInfoRaw
-	if err := UnmarshalPyON(a.buffer.Bytes(), &raw); err != nil {
+	var info []SlotQueueInfo
+	if err := UnmarshalPyON(a.buffer.Bytes(), &info); err != nil {
 		return nil, err
 	}
 
-	result := make([]SlotQueueInfo, len(raw))
-	for i, row := range raw {
-		if err := result[i].fromRaw(&row); err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
+	return info, nil
 }
 
 // RequestID requests an ID from the assignment server.

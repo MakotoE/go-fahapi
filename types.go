@@ -159,14 +159,12 @@ type StringInt int
 var _ json.Unmarshaler = (*StringInt)(nil)
 
 func (i *StringInt) UnmarshalJSON(b []byte) error {
-	if b[0] != '"' || b[len(b)-1] != '"' {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(i),
-		}
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
 	}
 
-	integer, err := strconv.Atoi(string(b[1 : len(b)-1]))
+	integer, err := strconv.Atoi(s)
 	if err != nil {
 		return &json.UnmarshalTypeError{
 			Value: string(b),
@@ -199,14 +197,12 @@ func NewPower(s string) (Power, error) {
 }
 
 func (p *Power) UnmarshalJSON(b []byte) error {
-	if b[0] != '"' || b[len(b)-1] != '"' {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(p),
-		}
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
 	}
 
-	power, err := NewPower(string(b[1 : len(b)-1]))
+	power, err := NewPower(s)
 	if err != nil {
 		return &json.UnmarshalTypeError{
 			Value: string(b),
@@ -230,8 +226,8 @@ type SlotQueueInfo struct {
 	Unit           string
 	PercentDone    string
 	ETA            FAHDuration
-	PPD            int
-	CreditEstimate int
+	PPD            StringInt
+	CreditEstimate StringInt
 	WaitingOn      string
 	NextAttempt    FAHDuration
 	TimeRemaining  FAHDuration
@@ -245,103 +241,7 @@ type SlotQueueInfo struct {
 	Attempts       int
 	Slot           string
 	TPF            FAHDuration
-	BaseCredit     int
-}
-
-//var _ json.Unmarshaler = &SlotQueueInfo{}
-
-type slotQueueInfoRaw struct {
-	ID             string `json:"id"`
-	State          string `json:"state"`
-	Error          string `json:"error"`
-	Project        int    `json:"project"`
-	Run            int    `json:"run"`
-	Clone          int    `json:"clone"`
-	Gen            int    `json:"gen"`
-	Core           string `json:"core"`
-	Unit           string `json:"unit"`
-	PercentDone    string `json:"percentdone"`
-	ETA            string `json:"eta"`
-	PPD            string `json:"ppd"`
-	CreditEstimate string `json:"creditestimate"`
-	WaitingOn      string `json:"waitingon"`
-	NextAttempt    string `json:"nextattempt"`
-	TimeRemaining  string `json:"timeremaining"`
-	TotalFrames    int    `json:"totalframes"`
-	FramesDone     int    `json:"framesdone"`
-	Assigned       string `json:"assigned"`
-	Timeout        string `json:"timeout"`
-	Deadline       string `json:"deadline"`
-	WS             string `json:"ws"`
-	CS             string `json:"cs"`
-	Attempts       int    `json:"attempts"`
-	Slot           string `json:"slot"`
-	TPF            string `json:"tpf"`
-	BaseCredit     string `json:"basecredit"`
-}
-
-//var _ json.Unmarshaler = &slotQueueInfoRaw{}
-
-func (s *SlotQueueInfo) fromRaw(r *slotQueueInfoRaw) error {
-	var err error
-	s.ID = r.ID
-	s.State = r.State
-	s.Error = r.Error
-	s.Project = r.Project
-	s.Run = r.Run
-	s.Clone = r.Clone
-	s.Gen = r.Gen
-	s.Core = r.Core
-	s.Unit = r.Unit
-	s.PercentDone = r.PercentDone
-	s.ETA, err = ParseFAHDuration(r.ETA)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.PPD, err = strconv.Atoi(r.PPD)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.CreditEstimate, err = strconv.Atoi(r.CreditEstimate)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.WaitingOn = r.WaitingOn
-	s.NextAttempt, err = ParseFAHDuration(r.NextAttempt)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.TimeRemaining, err = ParseFAHDuration(r.TimeRemaining)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.TotalFrames = r.TotalFrames
-	s.FramesDone = r.FramesDone
-	s.Assigned, err = ParseFAHTime(r.Assigned)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.Timeout, err = ParseFAHTime(r.Timeout)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.Deadline, err = ParseFAHTime(r.Deadline)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.WS = r.WS
-	s.CS = r.CS
-	s.Attempts = r.Attempts
-	s.Slot = r.Slot
-	s.TPF, err = ParseFAHDuration(r.TPF)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	s.BaseCredit, err = strconv.Atoi(r.BaseCredit)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return errors.WithStack(err)
+	BaseCredit     StringInt
 }
 
 func ParseFAHTime(s string) (time.Time, error) {
@@ -353,6 +253,8 @@ func ParseFAHTime(s string) (time.Time, error) {
 }
 
 type FAHDuration time.Duration
+
+var _ json.Unmarshaler = (*FAHDuration)(nil)
 
 var parseFAHDurationReplacer = strings.NewReplacer(
 	" ", "",
@@ -408,4 +310,22 @@ func (f FAHDuration) String() string {
 	}
 
 	return time.Duration(f).String()
+}
+
+func (f *FAHDuration) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	duration, err := ParseFAHDuration(s)
+	if err != nil {
+		return &json.UnmarshalTypeError{
+			Value: string(b),
+			Type:  reflect.TypeOf(f),
+		}
+	}
+
+	*f = duration
+	return nil
 }
