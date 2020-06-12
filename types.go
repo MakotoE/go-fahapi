@@ -244,14 +244,6 @@ type SlotQueueInfo struct {
 	BaseCredit     StringInt   `json:"basecredit"`
 }
 
-func ParseFAHTime(s string) (time.Time, error) {
-	if s == "<invalid>" {
-		return time.Time{}, nil
-	}
-
-	return time.Parse(time.RFC3339, s)
-}
-
 type FAHDuration time.Duration
 
 var _ json.Unmarshaler = (*FAHDuration)(nil)
@@ -328,4 +320,64 @@ func (f *FAHDuration) UnmarshalJSON(b []byte) error {
 
 	*f = duration
 	return nil
+}
+
+type SimulationInfo struct {
+	User            string  `json:"user"`
+	Team            string  `json:"team"`
+	Project         int     `json:"project"`
+	Run             int     `json:"run"`
+	Clone           int     `json:"clone"`
+	Gen             int     `json:"gen"`
+	CoreType        int     `json:"core_type"`
+	Core            string  `json:"core"`
+	TotalIterations int     `json:"total_iterations"`
+	IterationsDone  int     `json:"iterations_done"`
+	Energy          int     `json:"energy"`
+	Temperature     int     `json:"temperature"`
+	StartTime       FAHTime `json:"start_time"`
+	Timeout         int     `json:"timeout"`
+	Deadline        int     `json:"deadline"`
+	ETA             int     `json:"eta"`
+	Progress        float64 `json:"progress"`
+	Slot            int     `json:"slot"`
+}
+
+type FAHTime time.Time
+
+var _ json.Unmarshaler = (*FAHTime)(nil)
+
+func ParseFAHTime(s string) (FAHTime, error) {
+	if s == "<invalid>" {
+		return FAHTime{}, nil
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	return FAHTime(t), err
+}
+
+func (t *FAHTime) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	fahTime, err := ParseFAHTime(s)
+	if err != nil {
+		return &json.UnmarshalTypeError{
+			Value: string(b),
+			Type:  reflect.TypeOf(t),
+		}
+	}
+	*t = fahTime
+	return nil
+}
+
+type SlotInfo struct {
+	ID          string                 `json:"id"`
+	Status      string                 `json:"status"`
+	Description string                 `json:"description"`
+	Options     map[string]interface{} `json:"options"`
+	Reason      string                 `json:"reason"`
+	Idle        bool                   `json:"idle"`
 }

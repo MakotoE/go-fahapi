@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Official FAH API documentation
@@ -422,28 +421,6 @@ func (a *API) Shutdown() error {
 	return Exec(a.TCPConn, "shutdown", a.buffer)
 }
 
-type SimulationInfo struct {
-	User            string `json:"user"`
-	Team            string `json:"team"`
-	Project         int    `json:"project"`
-	Run             int    `json:"run"`
-	Clone           int    `json:"clone"`
-	Gen             int    `json:"gen"`
-	CoreType        int    `json:"core_type"`
-	Core            string `json:"core"`
-	TotalIterations int    `json:"total_iterations"`
-	IterationsDone  int    `json:"iterations_done"`
-	Energy          int    `json:"energy"`
-	Temperature     int    `json:"temperature"`
-	StartTimeStr    string `json:"start_time"`
-	StartTime       time.Time
-	Timeout         int     `json:"timeout"`
-	Deadline        int     `json:"deadline"`
-	ETA             int     `json:"eta"`
-	Progress        float64 `json:"progress"`
-	Slot            int     `json:"slot"`
-}
-
 // SimulationInfo returns the simulation information for a slot.
 func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
 	a.mutex.Lock()
@@ -456,23 +433,7 @@ func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
 	if err := UnmarshalPyON(a.buffer.Bytes(), dst); err != nil {
 		return err
 	}
-
-	startTime, err := ParseFAHTime(dst.StartTimeStr)
-	if err != nil {
-		return err
-	}
-
-	dst.StartTime = startTime
 	return nil
-}
-
-type SlotInfo struct {
-	ID          string                 `json:"id"`
-	Status      string                 `json:"status"`
-	Description string                 `json:"description"`
-	Options     map[string]interface{} `json:"options"`
-	Reason      string                 `json:"reason"`
-	Idle        bool                   `json:"idle"`
 }
 
 // SlotInfo returns information about each slot.
