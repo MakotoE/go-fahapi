@@ -267,7 +267,16 @@ func (a *API) DownloadCore(coreType string, url *url.URL) error {
 	return Exec(a.TCPConn, fmt.Sprintf("download-core %s %s", coreType, url.String()), a.buffer)
 }
 
+// FinishSlot pauses a slot when its current work unit is completed.
+func (a *API) FinishSlot(slot int) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
+}
+
 // Finish pauses a slot when its current work unit is completed.
+// Deprecated: use FinishSlot().
 func (a *API) Finish(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
