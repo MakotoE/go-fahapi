@@ -325,7 +325,7 @@ func (a *API) OnIdleAll() error {
 	return Exec(a.TCPConn, "on_idle", a.buffer)
 }
 
-// OptionsGet gets the FAH client options.
+// OptionsGet returns the FAH client options.
 func (a *API) OptionsGet(dst *Options) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
@@ -337,18 +337,18 @@ func (a *API) OptionsGet(dst *Options) error {
 	return UnmarshalPyON(a.buffer.Bytes(), &dst)
 }
 
-// OptionsSet sets an option.
+// OptionsSet sets an option. value argument is turned into a string using fmt.Sprintf().
 func (a *API) OptionsSet(key string, value interface{}) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	// Prevent injection attacks
-	valueString, valueIsString := value.(string)
-	if strings.ContainsAny(key, "= !") || valueIsString && strings.ContainsRune(valueString, ' ') {
+	valueString := fmt.Sprintf("%s", value)
+	if strings.ContainsAny(key, "= !") || strings.ContainsRune(valueString, ' ') {
 		return errors.New("key or value contains bad char")
 	}
 
-	return Exec(a.TCPConn, fmt.Sprintf("options %s=%s", key, value), a.buffer)
+	return Exec(a.TCPConn, fmt.Sprintf("options %s=%s", key, valueString), a.buffer)
 }
 
 // PauseAll pauses all slots.
@@ -423,6 +423,7 @@ func (a *API) Shutdown() error {
 
 // SimulationInfo returns the simulation information for a slot.
 func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
+	// "just like the simulations"
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
