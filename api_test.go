@@ -229,12 +229,12 @@ func (a *APITestSuite) TestDoCycle() {
 	assert.Nil(a.T(), a.api.DoCycle())
 }
 
-func (a *APITestSuite) TestFinish() {
+func (a *APITestSuite) TestFinishSlot() {
 	if !doAllTests {
 		return
 	}
 
-	assert.Nil(a.T(), a.api.Finish(0))
+	assert.Nil(a.T(), a.api.FinishSlot(0))
 }
 
 func (a *APITestSuite) TestInfo() {
