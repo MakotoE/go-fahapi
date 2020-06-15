@@ -244,6 +244,7 @@ type SlotQueueInfo struct {
 	BaseCredit     StringInt   `json:"basecredit"`
 }
 
+// FAHDuration may be "unknowntime", which can be checked by calling duration.UnknownTime().
 type FAHDuration time.Duration
 
 var _ json.Unmarshaler = (*FAHDuration)(nil)

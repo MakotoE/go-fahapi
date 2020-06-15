@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-go@v2
         with:
@@ -17,9 +17,9 @@ jobs:
       - run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |\
             sh -s -- -b $(go env GOPATH)/bin v1.26.0
-      - uses: actions/checkout@v2
       - run: wget https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v7.6/fahclient_7.6.13_amd64.deb
       - run: sudo dpkg -i fahclient_7.6.13_amd64.deb
       - run: FAHClient --send-command pause
+      - uses: actions/checkout@v2
       - run: go test -v --do-all-tests
       - run: golangci-lint run
