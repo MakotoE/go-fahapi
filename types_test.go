@@ -105,3 +105,21 @@ func TestFAHDuration_String(t *testing.T) {
 		assert.Equal(t, "unknowntime", d.String())
 	}
 }
+
+func TestFAHDuration_UnknownTime(t *testing.T) {
+	duration := FAHDuration(0)
+	assert.False(t, duration.UnknownTime())
+	assert.NotEqual(t, "unknowntime", duration.String())
+	assert.Nil(t, duration.UnmarshalJSON([]byte(`"unknowntime"`)))
+	assert.True(t, duration.UnknownTime())
+	assert.Equal(t, "unknowntime", duration.String())
+}
+
+func TestFAHTime_Invalid(t *testing.T) {
+	ti := FAHTime(time.Now())
+	assert.False(t, ti.Invalid())
+	assert.NotEqual(t, "<invalid>", ti.String())
+	assert.Nil(t, ti.UnmarshalJSON([]byte(`"<invalid>"`)))
+	assert.True(t, ti.Invalid())
+	assert.Equal(t, "<invalid>", ti.String())
+}

@@ -233,9 +233,9 @@ type SlotQueueInfo struct {
 	TimeRemaining  FAHDuration `json:"timeremaining"`
 	TotalFrames    int         `json:"totalframes"`
 	FramesDone     int         `json:"framesdone"`
-	Assigned       time.Time   `json:"assigned"`
-	Timeout        time.Time   `json:"timeout"`
-	Deadline       time.Time   `json:"deadline"`
+	Assigned       FAHTime     `json:"assigned"`
+	Timeout        FAHTime     `json:"timeout"`
+	Deadline       FAHTime     `json:"deadline"`
 	WS             string      `json:"ws"`
 	CS             string      `json:"cs"`
 	Attempts       int         `json:"attempts"`
@@ -344,17 +344,32 @@ type SimulationInfo struct {
 	Slot            int     `json:"slot"`
 }
 
+// FAHTime can be invalid, which can be checked with time.Invalid().
 type FAHTime time.Time
 
 var _ json.Unmarshaler = (*FAHTime)(nil)
 
+const invalidTime = "<invalid>"
+
 func ParseFAHTime(s string) (FAHTime, error) {
-	if s == "<invalid>" {
+	if s == invalidTime {
 		return FAHTime{}, nil
 	}
 
 	t, err := time.Parse(time.RFC3339, s)
 	return FAHTime(t), err
+}
+
+func (t FAHTime) Invalid() bool {
+	return time.Time(t).IsZero()
+}
+
+func (t FAHTime) String() string {
+	if t.Invalid() {
+		return invalidTime
+	}
+
+	return time.Time(t).String()
 }
 
 func (t *FAHTime) UnmarshalJSON(b []byte) error {
