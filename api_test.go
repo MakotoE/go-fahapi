@@ -3,7 +3,6 @@ package fahapi
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"github.com/MakotoE/checkerror"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -55,13 +54,6 @@ func (a *APITestSuite) SetupSuite() {
 
 func (a *APITestSuite) TearDownSuite() {
 	a.api.Close()
-}
-
-func (a *APITestSuite) TestAPI() {
-	// For trying new commands
-	b, err := a.api.Exec("")
-	assert.Nil(a.T(), err)
-	fmt.Print(b)
 }
 
 func (a *APITestSuite) TestExec() {
@@ -306,9 +298,32 @@ func (a *APITestSuite) TestSimulationInfo() {
 	assert.Nil(a.T(), a.api.SimulationInfo(0, &SimulationInfo{}))
 }
 
+// Maybe it's best not to test SlotDelete()
+
 func (a *APITestSuite) TestSlotInfo() {
-	_, err := a.api.SlotInfo()
+	result, err := a.api.SlotInfo()
 	assert.Nil(a.T(), err)
+	assert.Greater(a.T(), len(result), 0)
+}
+
+func (a *APITestSuite) TestSlotOptionsGetSet() {
+	if !doAllTests {
+		return
+	}
+
+	//assert.NotNil(a.T(), a.api.SlotOptionsGet(-1, &SlotOptions{}))
+
+	options := &SlotOptions{}
+	assert.Nil(a.T(), a.api.SlotOptionsGet(0, options))
+	assert.NotEmpty(a.T(), options.MachineID)
+
+	assert.Nil(a.T(), a.api.SlotOptionsSet(0, "paused", false))
+
+	newOptions := &SlotOptions{}
+	assert.Nil(a.T(), a.api.SlotOptionsGet(0, newOptions))
+	assert.Equal(a.T(), StringBool(false), newOptions.Paused)
+
+	assert.Nil(a.T(), a.api.SlotOptionsSet(0, "paused", options.Paused))
 }
 
 func (a *APITestSuite) TestPauseUnpause() {

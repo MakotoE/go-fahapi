@@ -73,10 +73,7 @@ func Exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 		return errors.WithStack(err)
 	}
 
-	if err := readMessage(conn, buffer); err != nil {
-		return err
-	}
-	return nil
+	return readMessage(conn, buffer)
 }
 
 func readMessage(r io.Reader, buffer *bytes.Buffer) error {
@@ -85,6 +82,10 @@ func readMessage(r io.Reader, buffer *bytes.Buffer) error {
 		b := [1]byte{} // Read() blocks if there is no data to fill buffer completely
 		n, err := r.Read(b[:])
 		if err != nil {
+			if err == io.EOF {
+				return errors.WithMessage(err, "the command might have been invalid")
+			}
+
 			return errors.WithStack(err)
 		}
 		if n <= 0 {
@@ -352,7 +353,7 @@ func (a *API) OptionsSet(key string, value interface{}) error {
 	defer a.mutex.Unlock()
 
 	// Prevent injection attacks
-	valueString := fmt.Sprintf("%s", value)
+	valueString := fmt.Sprintf("%v", value)
 	if strings.ContainsAny(key, "= !") || strings.ContainsRune(valueString, ' ') {
 		return errors.New("key or value contains bad char")
 	}
@@ -446,6 +447,14 @@ func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
 	return nil
 }
 
+// SlotDelete deletes a slot.
+func (a *API) SlotDelete(slot int) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return Exec(a.TCPConn, fmt.Sprintf("slot-delete %d", slot), a.buffer)
+}
+
 // SlotInfo returns information about each slot.
 func (a *API) SlotInfo() ([]SlotInfo, error) {
 	a.mutex.Lock()
@@ -457,6 +466,24 @@ func (a *API) SlotInfo() ([]SlotInfo, error) {
 
 	var result []SlotInfo
 	return result, UnmarshalPyON(a.buffer.Bytes(), &result)
+}
+
+func (a *API) SlotOptionsGet(slot int, dst *SlotOptions) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	if err := Exec(a.TCPConn, fmt.Sprintf("slot-options %d -a", slot), a.buffer); err != nil {
+		return err
+	}
+
+	return UnmarshalPyON(a.buffer.Bytes(), dst)
+}
+
+func (a *API) SlotOptionsSet(slot int, key string, value interface{}) error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	return Exec(a.TCPConn, fmt.Sprintf("slot-options %d %s %v", slot, key, value), a.buffer)
 }
 
 // UnpauseAll unpauses all slots.
