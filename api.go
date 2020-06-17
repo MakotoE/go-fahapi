@@ -35,7 +35,7 @@ func Dial(addr *net.TCPAddr) (*API, error) {
 		return nil, err
 	}
 
-	return &API{Connection: conn}, nil
+	return &API{Connection: conn, buffer: &bytes.Buffer{}}, nil
 }
 
 // TODO implement all commands
@@ -341,8 +341,7 @@ func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	command := fmt.Sprintf("simulation-info %d", slot)
-	if err := a.Exec(command, a.buffer); err != nil {
+	if err := a.Exec(fmt.Sprintf("simulation-info %d", slot), a.buffer); err != nil {
 		return err
 	}
 
@@ -377,8 +376,7 @@ func (a *API) SlotOptionsGet(slot int, dst *SlotOptions) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	command := fmt.Sprintf("slot-options %d -a", slot)
-	if err := a.Exec(command, a.buffer); err != nil {
+	if err := a.Exec(fmt.Sprintf("slot-options %d -a", slot), a.buffer); err != nil {
 		return err
 	}
 
@@ -389,8 +387,7 @@ func (a *API) SlotOptionsSet(slot int, key string, value interface{}) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	command := fmt.Sprintf("slot-options %d %s %v", slot, key, value)
-	return a.Exec(command, a.buffer)
+	return a.Exec(fmt.Sprintf("slot-options %d %s %v", slot, key, value), a.buffer)
 }
 
 // UnpauseAll unpauses all slots.

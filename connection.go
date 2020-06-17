@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
-	"log"
 	"net"
 	"strings"
 )
@@ -38,13 +37,8 @@ func connect(addr *net.TCPAddr) (*net.TCPConn, error) {
 	return conn, nil
 }
 
-// Exec executes a command on the FAH client and writes and response to buffer.
-func (a *Connection) Exec(command string, buffer *bytes.Buffer) error {
-	return a.checkEOF(Exec(a.TCPConn, command, buffer))
-}
-
-// Exec sends command to the connection and writes the response to buffer.
-func Exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
+// Exec executes a command on the FAH client and writes the response to buffer.
+func (c *Connection) Exec(command string, buffer *bytes.Buffer) error {
 	if command == "" {
 		// FAH doesn't respond to an empty command
 		buffer.Reset()
@@ -55,11 +49,22 @@ func Exec(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 		return errors.New("command contains newline")
 	}
 
-	if _, err := conn.Write(append([]byte(command), '\n')); err != nil {
+	if _, err := c.TCPConn.Write(append([]byte(command), '\n')); err != nil {
 		return errors.WithStack(err)
 	}
 
-	return readMessage(conn, buffer)
+	err := readMessage(c.TCPConn, buffer)
+	if errors.Cause(err) == io.EOF {
+		c.TCPConn.Close()
+
+		conn, err := connect(&c.Addr)
+		if err != nil {
+			return err
+		}
+
+		c.TCPConn = conn
+	}
+	return err
 }
 
 func readMessage(r io.Reader, buffer *bytes.Buffer) error {
@@ -92,24 +97,15 @@ func readMessage(r io.Reader, buffer *bytes.Buffer) error {
 	}
 }
 
-// ExecEval executes commands which do not return a trailing newline. The returned data is shared
-// with the underlying buffer.
-func (a *API) ExecEval(command string, buffer *bytes.Buffer) error {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	return a.checkEOF(ExecEval(a.TCPConn, command, buffer))
-}
-
 // ExecEval executes commands which do not return a trailing newline.
-func ExecEval(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
+func (c *Connection) ExecEval(command string, buffer *bytes.Buffer) error {
 	if command == "" {
 		// FAH doesn't respond to an empty command
 		buffer.Reset()
 		return nil
 	}
 
-	if err := Exec(conn, fmt.Sprintf(`eval "$(%s)\n"`, command), buffer); err != nil {
+	if err := c.Exec(fmt.Sprintf(`eval "$(%s)\n"`, command), buffer); err != nil {
 		return err
 	}
 
@@ -117,21 +113,6 @@ func ExecEval(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 	if buffer.Bytes()[buffer.Len()-1] == '\\' {
 		buffer.Truncate(buffer.Len() - 1)
 	}
+
 	return nil
-}
-
-// checkEOF reconnects the API if e is io.EOF and returns e.
-func (a *Connection) checkEOF(e error) error {
-	if errors.Cause(e) == io.EOF {
-		a.TCPConn.Close()
-
-		conn, err := connect(&a.Addr)
-		if err != nil {
-			return err
-		}
-
-		a.TCPConn = conn
-		log.Println("reconnected due to EOF")
-	}
-	return e
 }
