@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"flag"
 	"github.com/MakotoE/checkerror"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"testing"
 	"time"
 )
@@ -60,19 +57,19 @@ func (a *APITestSuite) TearDownSuite() {
 
 func (a *APITestSuite) TestExec() {
 	buffer := &bytes.Buffer{}
-	assert.Nil(a.T(), Exec(a.api.TCPConn, "", buffer))
+	assert.Nil(a.T(), a.api.Exec("", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 
-	assert.NotNil(a.T(), Exec(a.api.TCPConn, "\n", buffer))
+	assert.NotNil(a.T(), a.api.Exec("\n", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 }
 
 func (a *APITestSuite) TestExecEval() {
 	buffer := &bytes.Buffer{}
-	assert.Nil(a.T(), ExecEval(a.api.TCPConn, "", buffer))
+	assert.Nil(a.T(), a.api.ExecEval("", buffer))
 	assert.Equal(a.T(), 0, buffer.Len())
 
-	assert.Nil(a.T(), ExecEval(a.api.TCPConn, "date", buffer))
+	assert.Nil(a.T(), a.api.ExecEval("date", buffer))
 	assert.Greater(a.T(), buffer.Len(), 0)
 }
 
@@ -342,72 +339,6 @@ func (a *APITestSuite) TestPauseUnpause() {
 func (a *APITestSuite) TestUptime() {
 	_, err := a.api.Uptime()
 	assert.Nil(a.T(), err)
-}
-
-func TestReadMessage(t *testing.T) {
-	tests := []struct {
-		s             string
-		expected      string
-		expectedError error
-	}{
-		{
-			"",
-			"",
-			io.EOF,
-		},
-		{
-			"\n> ",
-			"",
-			nil,
-		},
-		{
-			"a",
-			"a",
-			io.EOF,
-		},
-		{
-			"a\n> ",
-			"a",
-			nil,
-		},
-		{
-			"a\n> \n> ",
-			"a",
-			nil,
-		},
-		{
-			"\na\n> ",
-			"a",
-			nil,
-		},
-		{
-			"\na",
-			"\na",
-			io.EOF,
-		},
-	}
-
-	buffer := &bytes.Buffer{}
-	for i, test := range tests {
-		err := readMessage(strings.NewReader(test.s), buffer)
-		assert.Equal(t, test.expectedError, errors.Cause(err), i)
-		assert.Equal(t, test.expected, buffer.String(), i)
-	}
-}
-
-func BenchmarkReadMessage(b *testing.B) {
-	// BenchmarkReadMessage-8   	 4450298	       268 ns/op
-	buffer := &bytes.Buffer{}
-	var result []byte
-	r := &bytes.Buffer{}
-	for i := 0; i < b.N; i++ {
-		r.WriteString("message\n> ")
-		if err := readMessage(r, buffer); err != nil {
-			panic(err)
-		}
-		result = buffer.Bytes()
-	}
-	_ = result
 }
 
 func TestUnmarshalPyON(t *testing.T) {
