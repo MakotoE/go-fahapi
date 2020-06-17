@@ -397,3 +397,8 @@ type SlotInfo struct {
 	Reason      string                 `json:"reason"`
 	Idle        bool                   `json:"idle"`
 }
+
+type SlotOptions struct {
+	MachineID string     `json:"machine-id"`
+	Paused    StringBool `json:"paused"`
+}

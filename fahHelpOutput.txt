@@ -57,19 +57,19 @@ Folding@home Client:
                               file or to the file the configuration was last
                               loaded from. [Does this do anything?]
   shutdown                    Shutdown the application [Done]
-  simulation-info <slot id>   Get current simulation information.
+  simulation-info <slot id>   Get current simulation information. [Done]
   slot-add <type> [<name>=<value>]... Add a new slot. Configuration options for
-                              the new slot can be provided.
+                              the new slot can be provided. [How do you use this?]
   slot-delete <slot>          Delete a slot. If it is running a unit it will be
-                              stopped.
+                              stopped. [Done]
   slot-info                   Get slot information in PyON format. [Done]
   slot-modify <id> <type> [<name><! | =<value>>]... Modify an existing slot.
                               Configuration options can be either set or reset
                               using the same syntax used by the 'options'
-                              command.
+                              command. [How do you use this?]
   slot-options <slot> [-d | -a] | [name]... The first argument is the slot ID.
                               See 'options' help for a description of the
-                              remaining arguments.
+                              remaining arguments. [Done]
   trajectory <slot id>        Get current protein trajectory.
   unpause [slot]              Unpause all or one slot(s). [Done]
   uptime                      Print application uptime [Done]
