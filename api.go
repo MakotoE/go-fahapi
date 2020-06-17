@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"log"
 	"net"
 	"net/url"
 	"regexp"
@@ -22,6 +23,7 @@ import (
 // the connection and release resources.
 type API struct {
 	*net.TCPConn
+	Addr   net.TCPAddr // Reconnects to this address on disconnection.
 	buffer *bytes.Buffer
 	mutex  sync.Mutex
 }
@@ -31,16 +33,26 @@ var DefaultAddr = &net.TCPAddr{Port: 36330}
 
 // Dial connects to your FAH client. DefaultAddr is the default client address.
 func Dial(addr *net.TCPAddr) (*API, error) {
+	buffer := &bytes.Buffer{}
+	conn, err := connect(addr, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return &API{TCPConn: conn, Addr: *addr, buffer: buffer}, nil
+}
+
+func connect(addr *net.TCPAddr, buffer *bytes.Buffer) (*net.TCPConn, error) {
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	buffer := &bytes.Buffer{}
 	if err = readMessage(conn, buffer); err != nil { // Discard welcome message
 		return nil, errors.WithStack(err)
 	}
-	return &API{TCPConn: conn, buffer: buffer}, nil
+
+	return conn, nil
 }
 
 // TODO implement all commands
@@ -51,7 +63,7 @@ func (a *API) Exec(command string) ([]byte, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, command, a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, command, a.buffer)); err != nil {
 		return nil, err
 	}
 	return a.buffer.Bytes(), nil
@@ -112,7 +124,7 @@ func (a *API) ExecEval(command string) ([]byte, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := ExecEval(a.TCPConn, command, a.buffer); err != nil {
+	if err := a.checkEOF(ExecEval(a.TCPConn, command, a.buffer)); err != nil {
 		return nil, err
 	}
 	return a.buffer.Bytes(), nil
@@ -137,12 +149,28 @@ func ExecEval(conn *net.TCPConn, command string, buffer *bytes.Buffer) error {
 	return nil
 }
 
+// checkEOF reconnects the API if e is io.EOF and returns e.
+func (a *API) checkEOF(e error) error {
+	if errors.Cause(e) == io.EOF {
+		a.TCPConn.Close()
+
+		conn, err := connect(&a.Addr, a.buffer)
+		if err != nil {
+			return err
+		}
+
+		a.TCPConn = conn
+		log.Println("reconnected due to EOF")
+	}
+	return e
+}
+
 // Help returns a listing of the FAH API commands.
 func (a *API) Help() (string, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "help", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "help", a.buffer)); err != nil {
 		return "", err
 	}
 
@@ -169,11 +197,12 @@ func (a *API) LogUpdates(arg LogUpdatesArg) (string, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, fmt.Sprintf("log-updates %s", arg), a.buffer); err != nil {
+	command := fmt.Sprintf("log-updates %s", arg)
+	if err := a.checkEOF(Exec(a.TCPConn, command, a.buffer)); err != nil {
 		return "", err
 	}
 
-	if err := ExecEval(a.TCPConn, "eval", a.buffer); err != nil {
+	if err := a.checkEOF(ExecEval(a.TCPConn, "eval", a.buffer)); err != nil {
 		return "", nil
 	}
 
@@ -225,7 +254,7 @@ func (a *API) Screensaver() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "screensaver", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "screensaver", a.buffer))
 }
 
 // AlwaysOn sets a slot to be always on. (Not sure if this does anything at all.)
@@ -233,7 +262,7 @@ func (a *API) AlwaysOn(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("always_on %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("always_on %d", slot), a.buffer))
 }
 
 // Configured returns true if the client has set a user, team or passkey.
@@ -241,7 +270,7 @@ func (a *API) Configured() (bool, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "configured", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "configured", a.buffer)); err != nil {
 		return false, err
 	}
 
@@ -257,7 +286,7 @@ func (a *API) DoCycle() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "do-cycle", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "do-cycle", a.buffer))
 }
 
 // DownloadCore downloads a core. NOT TESTED.
@@ -265,7 +294,8 @@ func (a *API) DownloadCore(coreType string, url *url.URL) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("download-core %s %s", coreType, url.String()), a.buffer)
+	command := fmt.Sprintf("download-core %s %s", coreType, url.String())
+	return a.checkEOF(Exec(a.TCPConn, command, a.buffer))
 }
 
 // FinishSlot pauses a slot when its current work unit is completed.
@@ -273,7 +303,7 @@ func (a *API) FinishSlot(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer))
 }
 
 // Finish pauses a slot when its current work unit is completed.
@@ -282,7 +312,7 @@ func (a *API) Finish(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("finish %d", slot), a.buffer))
 }
 
 // FinishAll pauses all slots one-by-one when their current work unit is completed.
@@ -290,7 +320,7 @@ func (a *API) FinishAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "finish", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "finish", a.buffer))
 }
 
 // Info returns FAH build and machine info.
@@ -298,7 +328,7 @@ func (a *API) Info() ([][]interface{}, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "info", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "info", a.buffer)); err != nil {
 		return nil, err
 	}
 
@@ -311,7 +341,7 @@ func (a *API) NumSlots() (int, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "num-slots", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "num-slots", a.buffer)); err != nil {
 		return 0, err
 	}
 
@@ -324,7 +354,7 @@ func (a *API) OnIdle(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("on_idle %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("on_idle %d", slot), a.buffer))
 }
 
 // OnIdle sets all slots to run only when idle.
@@ -332,7 +362,7 @@ func (a *API) OnIdleAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "on_idle", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "on_idle", a.buffer))
 }
 
 // OptionsGet returns the FAH client options.
@@ -340,7 +370,7 @@ func (a *API) OptionsGet(dst *Options) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "options -a", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "options -a", a.buffer)); err != nil {
 		return err
 	}
 
@@ -358,7 +388,7 @@ func (a *API) OptionsSet(key string, value interface{}) error {
 		return errors.New("key or value contains bad char")
 	}
 
-	return Exec(a.TCPConn, fmt.Sprintf("options %s=%s", key, valueString), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("options %s=%s", key, valueString), a.buffer))
 }
 
 // PauseAll pauses all slots.
@@ -366,7 +396,7 @@ func (a *API) PauseAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "pause", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "pause", a.buffer))
 }
 
 // PauseSlot pauses a slot.
@@ -375,7 +405,7 @@ func (a *API) PauseSlot(slot int) error {
 	defer a.mutex.Unlock()
 
 	// Unfortunately the command doesn't tell you if it succeeded or not
-	return Exec(a.TCPConn, fmt.Sprintf("pause %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("pause %d", slot), a.buffer))
 }
 
 // PPD returns the total estimated points per day for all slots.
@@ -383,7 +413,7 @@ func (a *API) PPD() (float64, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "ppd", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "ppd", a.buffer)); err != nil {
 		return 0, err
 	}
 	result := 0.0
@@ -395,7 +425,7 @@ func (a *API) QueueInfo() ([]SlotQueueInfo, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "queue-info", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "queue-info", a.buffer)); err != nil {
 		return nil, err
 	}
 
@@ -412,7 +442,7 @@ func (a *API) RequestID() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "request-id", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "request-id", a.buffer))
 }
 
 // RequestWS requests work server assignment from the assignment server.
@@ -420,7 +450,7 @@ func (a *API) RequestWS() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "request-ws", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "request-ws", a.buffer))
 }
 
 // Shutdown ends all FAH processes.
@@ -428,7 +458,7 @@ func (a *API) Shutdown() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "shutdown", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "shutdown", a.buffer))
 }
 
 // SimulationInfo returns the simulation information for a slot.
@@ -437,7 +467,8 @@ func (a *API) SimulationInfo(slot int, dst *SimulationInfo) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, fmt.Sprintf("simulation-info %d", slot), a.buffer); err != nil {
+	command := fmt.Sprintf("simulation-info %d", slot)
+	if err := a.checkEOF(Exec(a.TCPConn, command, a.buffer)); err != nil {
 		return err
 	}
 
@@ -452,7 +483,7 @@ func (a *API) SlotDelete(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("slot-delete %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("slot-delete %d", slot), a.buffer))
 }
 
 // SlotInfo returns information about each slot.
@@ -460,7 +491,7 @@ func (a *API) SlotInfo() ([]SlotInfo, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, "slot-info", a.buffer); err != nil {
+	if err := a.checkEOF(Exec(a.TCPConn, "slot-info", a.buffer)); err != nil {
 		return nil, err
 	}
 
@@ -472,7 +503,8 @@ func (a *API) SlotOptionsGet(slot int, dst *SlotOptions) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := Exec(a.TCPConn, fmt.Sprintf("slot-options %d -a", slot), a.buffer); err != nil {
+	command := fmt.Sprintf("slot-options %d -a", slot)
+	if err := a.checkEOF(Exec(a.TCPConn, command, a.buffer)); err != nil {
 		return err
 	}
 
@@ -483,7 +515,8 @@ func (a *API) SlotOptionsSet(slot int, key string, value interface{}) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("slot-options %d %s %v", slot, key, value), a.buffer)
+	command := fmt.Sprintf("slot-options %d %s %v", slot, key, value)
+	return a.checkEOF(Exec(a.TCPConn, command, a.buffer))
 }
 
 // UnpauseAll unpauses all slots.
@@ -491,7 +524,7 @@ func (a *API) UnpauseAll() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "unpause", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "unpause", a.buffer))
 }
 
 // UnpauseSlot unpauses a slot.
@@ -499,7 +532,7 @@ func (a *API) UnpauseSlot(slot int) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, fmt.Sprintf("unpause %d", slot), a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, fmt.Sprintf("unpause %d", slot), a.buffer))
 }
 
 // Uptime returns FAH uptime.
@@ -507,7 +540,7 @@ func (a *API) Uptime() (FAHDuration, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	if err := ExecEval(a.TCPConn, "uptime", a.buffer); err != nil {
+	if err := a.checkEOF(ExecEval(a.TCPConn, "uptime", a.buffer)); err != nil {
 		return 0, err
 	}
 
@@ -519,7 +552,7 @@ func (a *API) WaitForUnits() error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return Exec(a.TCPConn, "wait-for-units", a.buffer)
+	return a.checkEOF(Exec(a.TCPConn, "wait-for-units", a.buffer))
 }
 
 func UnmarshalPyON(b []byte, dst interface{}) error {

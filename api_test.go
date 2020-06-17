@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -40,6 +41,7 @@ func TestAPITestSuite(t *testing.T) {
 		t.Skip()
 	}
 
+	log.SetOutput(ioutil.Discard)
 	suite.Run(t, &APITestSuite{})
 }
 
@@ -253,6 +255,8 @@ func (a *APITestSuite) TestOptionsSetGet() {
 		return
 	}
 
+	assert.NotNil(a.T(), a.api.OptionsSet("a", ""))
+
 	assert.NotNil(a.T(), a.api.OptionsSet("power=", ""))
 
 	oldOptions := &Options{}
@@ -311,7 +315,7 @@ func (a *APITestSuite) TestSlotOptionsGetSet() {
 		return
 	}
 
-	//assert.NotNil(a.T(), a.api.SlotOptionsGet(-1, &SlotOptions{}))
+	assert.NotNil(a.T(), a.api.SlotOptionsGet(-1, &SlotOptions{}))
 
 	options := &SlotOptions{}
 	assert.Nil(a.T(), a.api.SlotOptionsGet(0, options))
