@@ -386,8 +386,59 @@ func TestUnmarshalPyON(t *testing.T) {
 	}
 }
 
+func TestReplace(t *testing.T) {
+	tests := []struct {
+		b        []byte
+		old      []byte
+		new      []byte
+		expected []byte
+	}{
+		{
+			nil,
+			nil,
+			nil,
+			nil,
+		},
+		{
+			[]byte("a"),
+			[]byte("a"),
+			[]byte("a"),
+			[]byte("a"),
+		},
+		{
+			[]byte("b"),
+			[]byte("aa"),
+			[]byte("aa"),
+			[]byte("b"),
+		},
+		{
+			[]byte("a"),
+			[]byte("a"),
+			[]byte("b"),
+			[]byte("b"),
+		},
+		{
+			[]byte("ac"),
+			[]byte("a"),
+			[]byte("b"),
+			[]byte("bc"),
+		},
+		{
+			[]byte("ca"),
+			[]byte("a"),
+			[]byte("b"),
+			[]byte("cb"),
+		},
+	}
+
+	for i, test := range tests {
+		replace(test.b, test.old, test.new)
+		assert.Equal(t, test.expected, test.b, i)
+	}
+}
+
 func BenchmarkUnparshalPyOn(b *testing.B) {
-	// BenchmarkUnparshalPyOn-8   	 3064592	       406 ns/op
+	// BenchmarkUnparshalPyOn-8   	 3340447	       370 ns/op
 	var result struct{}
 	for i := 0; i < b.N; i++ {
 		_ = UnmarshalPyON([]byte("PyON\n{}\n---"), &result)
