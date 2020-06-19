@@ -438,18 +438,25 @@ func UnmarshalPyON(b []byte, dst interface{}) error {
 		start = end
 	}
 
-	replaced := bytes.ReplaceAll(
-		bytes.ReplaceAll(
+	var replaced []byte
+	if bytes.Equal(b[start:end], []byte("True")) {
+		replaced = []byte("true")
+	} else if bytes.Equal(b[start:end], []byte("False")) {
+		replaced = []byte("false")
+	} else {
+		replaced = bytes.ReplaceAll(
 			bytes.ReplaceAll(
-				b[start:end],
-				[]byte("None"),
-				[]byte(`""`),
+				bytes.ReplaceAll(
+					b[start:end],
+					[]byte(": None"),
+					[]byte(`: ""`),
+				),
+				[]byte(": False"),
+				[]byte(": false"),
 			),
-			[]byte("False"),
-			[]byte("false"),
-		),
-		[]byte("True"),
-		[]byte("true"),
-	)
+			[]byte(": True"),
+			[]byte(": true"),
+		)
+	}
 	return errors.WithStack(json.Unmarshal(replaced, dst))
 }

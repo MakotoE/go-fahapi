@@ -70,7 +70,7 @@ Folding@home Client:
   slot-options <slot> [-d | -a] | [name]... The first argument is the slot ID.
                               See 'options' help for a description of the
                               remaining arguments. [Done]
-  trajectory <slot id>        Get current protein trajectory.
+  trajectory <slot id>        Get current protein trajectory. [Doesn't seem to work]
   unpause [slot]              Unpause all or one slot(s). [Done]
   uptime                      Print application uptime [Done]
   wait-for-units              Wait for all running units to finish. [Done]
