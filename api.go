@@ -444,19 +444,34 @@ func UnmarshalPyON(b []byte, dst interface{}) error {
 	} else if bytes.Equal(b[start:end], []byte("False")) {
 		replaced = []byte("false")
 	} else {
-		replaced = bytes.ReplaceAll(
-			bytes.ReplaceAll(
-				bytes.ReplaceAll(
-					b[start:end],
-					[]byte(": None"),
-					[]byte(`: ""`),
-				),
-				[]byte(": False"),
-				[]byte(": false"),
-			),
-			[]byte(": True"),
-			[]byte(": true"),
-		)
+		replaced = bytes.ReplaceAll(b[start:end], []byte(": None"), []byte(`: ""`))
+		replace(replaced, []byte(": False"), []byte(": false"))
+		replace(replaced, []byte(": True"), []byte(": true"))
 	}
 	return errors.WithStack(json.Unmarshal(replaced, dst))
+}
+
+func replace(b []byte, old []byte, new []byte) {
+	if len(old) != len(new) {
+		panic("old and new must have the same length")
+	}
+
+	i := 0
+	for {
+		if i > len(b) {
+			return
+		}
+
+		if sliceIndex := bytes.Index(b[i:], old); sliceIndex >= 0 {
+			i = sliceIndex + i
+		} else {
+			return
+		}
+
+		if i > i+len(old) || i+len(old) > len(b) {
+			return
+		}
+		copy(b[i:i+len(new)], new)
+		i++
+	}
 }
