@@ -368,8 +368,13 @@ func TestUnmarshalPyON(t *testing.T) {
 			false,
 		},
 		{
-			"PyON\nNone\n---",
-			"",
+			"PyON\nTrue\n---",
+			true,
+			false,
+		},
+		{
+			"PyON\n{\"\": None}\n---",
+			map[string]interface{}{"": ""},
 			false,
 		},
 	}
