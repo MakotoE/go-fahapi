@@ -234,6 +234,12 @@ func (a *APITestSuite) TestInfo() {
 	assert.Nil(a.T(), err)
 }
 
+func (a *APITestSuite) TestInfoStruct() {
+	info := &Info{}
+	assert.Nil(a.T(), a.api.InfoStruct(info))
+	assert.NotEmpty(a.T(), info.FAHClient.Version)
+}
+
 func (a *APITestSuite) TestNumSlots() {
 	_, err := a.api.NumSlots()
 	assert.Nil(a.T(), err)

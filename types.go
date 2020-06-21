@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/pkg/errors"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -164,15 +165,20 @@ func (i *StringInt) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	integer, err := strconv.Atoi(s)
-	if err != nil {
+	if err := i.FromString(s); err != nil {
 		return &json.UnmarshalTypeError{
 			Value: string(b),
 			Type:  reflect.TypeOf(i),
 		}
 	}
-	*i = StringInt(integer)
+
 	return nil
+}
+
+func (i *StringInt) FromString(s string) error {
+	integer, err := strconv.Atoi(s)
+	*i = StringInt(integer)
+	return errors.WithStack(err)
 }
 
 type Power string
@@ -401,4 +407,115 @@ type SlotInfo struct {
 type SlotOptions struct {
 	MachineID string     `json:"machine-id"`
 	Paused    StringBool `json:"paused"`
+}
+
+type Info struct {
+	FAHClient struct {
+		Version   string
+		Author    string
+		Copyright string
+		Homepage  string
+		Date      string
+		Time      string
+		Revision  string
+		Branch    string
+		Compiler  string
+		Options   string
+		Platform  string
+		Bits      string
+		Mode      string
+		Args      string
+		Config    string
+	}
+	CBang struct {
+		Date     string
+		Time     string
+		Revision string
+		Branch   string
+		Compiler string
+		Options  string
+		Platform string
+		Bits     string
+		Mode     string
+	}
+	System struct {
+		CPU        string
+		CPUID      string
+		CPUs       StringInt
+		Memory     string
+		FreeMemory string
+		Threads    string
+		OSVersion  string
+		HasBattery string
+		OnBattery  string
+		UTCOffset  string
+		PID        string
+		CWD        string
+		OS         string
+		OSArch     string
+		GPUs       StringInt
+		// I don't have multiple GPUs so I can't test the "GPU 0" part
+	}
+	LibFAH struct {
+		Date     string
+		Time     string
+		Revision string
+		Branch   string
+		Compiler string
+		Options  string
+		Platform string
+		Bits     string
+		Mode     string
+	}
+}
+
+func (i *Info) FromSlice(src [][]interface{}) error {
+	if len(src) < 4 ||
+		src[0][0] != "FAHClient" ||
+		src[1][0] != "CBang" ||
+		src[2][0] != "System" ||
+		src[3][0] != "libFAH" {
+		return errors.New("src is invalid")
+	}
+
+	primaryFields := []interface{}{
+		&i.FAHClient,
+		&i.CBang,
+		&i.System,
+		&i.LibFAH,
+	}
+
+	for i, field := range primaryFields {
+		if err := readSlice(src[i], field); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var stringtype = reflect.TypeOf("")
+
+func readSlice(src []interface{}, dst interface{}) error {
+	infoValue := reflect.ValueOf(dst).Elem()
+	for _, item := range src[1:] {
+		key := item.([]interface{})[0].(string)
+		field := infoValue.FieldByName(strings.ReplaceAll(key, " ", ""))
+		if field.IsValid() {
+			value := item.([]interface{})[1].(string)
+			if field.Type() == stringtype {
+				field.Set(reflect.ValueOf(value))
+			} else {
+				result := field.Addr().
+					MethodByName("FromString").
+					Call([]reflect.Value{reflect.ValueOf(value)})
+
+				if !result[0].IsNil() {
+					return result[0].Interface().(error)
+				}
+			}
+		} else {
+			log.Printf("discarded info field: %s", key)
+		}
+	}
+	return nil
 }
