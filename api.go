@@ -210,6 +210,16 @@ func (a *API) Info() ([][]interface{}, error) {
 	return result, UnmarshalPyON(a.buffer.Bytes(), &result)
 }
 
+// InfoStruct converts Info() data into a structure. Consider this interface very unstable.
+func (a *API) InfoStruct(dst *Info) error {
+	src, err := a.Info()
+	if err != nil {
+		return err
+	}
+
+	return dst.FromSlice(src)
+}
+
 // NumSlots returns the number of slots.
 func (a *API) NumSlots() (int, error) {
 	a.mutex.Lock()

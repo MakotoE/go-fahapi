@@ -123,3 +123,32 @@ func TestFAHTime_Invalid(t *testing.T) {
 	assert.True(t, ti.Invalid())
 	assert.Equal(t, "<invalid>", ti.String())
 }
+
+func TestInfo_FromSlice(t *testing.T) {
+	src := [][]interface{}{
+		{
+			"FAHClient",
+			[]interface{}{"Version", "7.6.13"},
+		},
+		{
+			"CBang",
+			[]interface{}{"Date", "Apr 20 2020"},
+		},
+		{
+			"System",
+			[]interface{}{"CPU ID", "Intel Management Engine is a backdoor"},
+			[]interface{}{"CPUs", "1"},
+		},
+		{
+			"libFAH",
+			[]interface{}{"Date", "Apr 20 2020"},
+		},
+	}
+
+	info := Info{}
+	assert.NotNil(t, info.FromSlice(nil))
+	assert.Nil(t, info.FromSlice(src))
+	assert.NotEmpty(t, info.FAHClient.Version)
+	assert.NotEmpty(t, info.System.CPUID)
+	assert.Equal(t, info.System.CPUs, StringInt(1))
+}
