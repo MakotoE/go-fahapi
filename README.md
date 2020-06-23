@@ -23,3 +23,5 @@ func main() {
 	}
 }
 ```
+
+[Prefer Rust?](https://github.com/MakotoE/rust-fahapi)
