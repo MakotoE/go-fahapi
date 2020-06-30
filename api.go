@@ -14,7 +14,7 @@ import (
 	"sync"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = jsoniter.Config{}.Froze()
 
 // Official FAH API documentation
 // https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
