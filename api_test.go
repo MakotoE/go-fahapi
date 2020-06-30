@@ -444,7 +444,7 @@ func TestReplace(t *testing.T) {
 }
 
 func BenchmarkUnparshalPyOn(b *testing.B) {
-	// BenchmarkUnparshalPyOn-8   	 3340447	       370 ns/op
+	// BenchmarkUnparshalPyOn-8   	 5817169	       203 ns/op
 	var result struct{}
 	for i := 0; i < b.N; i++ {
 		_ = UnmarshalPyON([]byte("PyON\n{}\n---"), &result)
