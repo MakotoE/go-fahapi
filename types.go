@@ -2,7 +2,6 @@ package fahapi
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/pkg/errors"
 	"log"
 	"reflect"
@@ -138,8 +137,6 @@ type Options struct {
 
 type StringBool bool
 
-var _ json.Unmarshaler = (*StringBool)(nil)
-
 func (s *StringBool) UnmarshalJSON(b []byte) error {
 	if bytes.Equal(b, []byte(`"true"`)) {
 		*s = true
@@ -149,15 +146,10 @@ func (s *StringBool) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	return &json.UnmarshalTypeError{
-		Value: string(b),
-		Type:  reflect.TypeOf(s),
-	}
+	return errors.Errorf("invalid StringBool: %v", b)
 }
 
 type StringInt int
-
-var _ json.Unmarshaler = (*StringInt)(nil)
 
 func (i *StringInt) UnmarshalJSON(b []byte) error {
 	var s string
@@ -166,10 +158,7 @@ func (i *StringInt) UnmarshalJSON(b []byte) error {
 	}
 
 	if err := i.FromString(s); err != nil {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(i),
-		}
+		return errors.Errorf("invalid StringInt: %v", b)
 	}
 
 	return nil
@@ -182,8 +171,6 @@ func (i *StringInt) FromString(s string) error {
 }
 
 type Power string
-
-var _ json.Unmarshaler = (*Power)(nil)
 
 const (
 	PowerNull   Power = ""
@@ -210,10 +197,7 @@ func (p *Power) UnmarshalJSON(b []byte) error {
 
 	power, err := NewPower(s)
 	if err != nil {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(p),
-		}
+		return errors.Errorf("invalid Power: %v", b)
 	}
 
 	*p = power
@@ -252,8 +236,6 @@ type SlotQueueInfo struct {
 
 // FAHDuration may be "unknowntime", which can be checked by calling duration.UnknownTime().
 type FAHDuration time.Duration
-
-var _ json.Unmarshaler = (*FAHDuration)(nil)
 
 var parseFAHDurationReplacer = strings.NewReplacer(
 	" ", "",
@@ -319,10 +301,7 @@ func (f *FAHDuration) UnmarshalJSON(b []byte) error {
 
 	duration, err := ParseFAHDuration(s)
 	if err != nil {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(f),
-		}
+		return errors.Errorf("invalid FAHDuration: %v", b)
 	}
 
 	*f = duration
@@ -352,8 +331,6 @@ type SimulationInfo struct {
 
 // FAHTime can be invalid, which can be checked with time.Invalid().
 type FAHTime time.Time
-
-var _ json.Unmarshaler = (*FAHTime)(nil)
 
 const invalidTime = "<invalid>"
 
@@ -386,10 +363,7 @@ func (t *FAHTime) UnmarshalJSON(b []byte) error {
 
 	fahTime, err := ParseFAHTime(s)
 	if err != nil {
-		return &json.UnmarshalTypeError{
-			Value: string(b),
-			Type:  reflect.TypeOf(t),
-		}
+		return errors.Errorf("invalid FAHTime: %v", b)
 	}
 	*t = fahTime
 	return nil

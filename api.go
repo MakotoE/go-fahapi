@@ -3,8 +3,8 @@ package fahapi
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"net"
 	"net/url"
@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 )
+
+var json = jsoniter.Config{}.Froze()
 
 // Official FAH API documentation
 // https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API
@@ -37,8 +39,6 @@ func Dial(addr *net.TCPAddr) (*API, error) {
 
 	return &API{Connection: conn, buffer: &bytes.Buffer{}}, nil
 }
-
-// TODO implement all commands
 
 // Help returns a listing of the FAH API commands.
 func (a *API) Help() (string, error) {
@@ -197,7 +197,7 @@ func (a *API) FinishAll() error {
 	return a.Exec("finish", a.buffer)
 }
 
-// Info returns FAH build and machine info.
+// Info returns FAH build and machine info. See InfoStruct().
 func (a *API) Info() ([][]interface{}, error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
@@ -210,7 +210,7 @@ func (a *API) Info() ([][]interface{}, error) {
 	return result, UnmarshalPyON(a.buffer.Bytes(), &result)
 }
 
-// InfoStruct converts Info() data into a structure. Consider this interface very unstable.
+// InfoStruct converts Info() data into a structure. Consider this interface to be very unstable.
 func (a *API) InfoStruct(dst *Info) error {
 	src, err := a.Info()
 	if err != nil {
